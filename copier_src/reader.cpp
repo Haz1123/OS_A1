@@ -17,5 +17,7 @@ reader::reader(const std::string& name, writer& mywriter)
 void reader::run() {
     char* ingest = new char[read_buffer_size]();
     this->in.read(ingest, read_buffer_size);
+    //TODO: Check how using a fixed is impacting reads,
+    //      check if last string needs to be trimmed
     this->thewriter.append(std::string(ingest));
 }
