@@ -7,7 +7,7 @@
 #include <cstdlib>
 #include <filesystem>
 /* global variables if needed go here */
-int main(int argc, char** argv) {`
+int main(int argc, char** argv) {
     if(argc <= 2) {
         std::cout << "Program usage: copier.exe [source] [destination]";
         exit(1);
