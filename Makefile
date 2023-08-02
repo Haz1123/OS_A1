@@ -5,3 +5,5 @@
  ##
 
 # provide make targets here to build the two programs 
+copier:
+	g++ -Wall -Werror -std=c++20 -pedantic -g -o ./copier_build/copier.exe ./copier_src/*
