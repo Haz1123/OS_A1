@@ -16,7 +16,7 @@ class reader {
     reader(const std::string& name, writer& mywriter);
     ~reader();
     /* perform the reading from the file */
-    void run();
+    void run(int num_threads);
 
    private:
     std::ifstream in;
