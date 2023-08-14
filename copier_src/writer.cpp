@@ -13,14 +13,21 @@ writer::writer(const std::string& name) {
     this->queue = std::deque<std::string>();
 }
 
+writer::~writer() {
+    this->out.close();
+}
+
 void writer::run() {
-    while( !this->queue.empty() ) {
+    while( this->queue.back() != this->queue.front() ) {
         // TODO:    Check how buffer impacts the end of 
         //          the write. Can't have extra bytes
         //          at end of file.
-        this->out.write(this->queue.front().c_str(), 10);
+        this->out.write(this->queue.front().c_str(), this->queue.front().size());
+        this->out.write("\n", 1);
         this->queue.pop_front();
     }
+    this->out.write(this->queue.front().c_str(), this->queue.front().size());
+    this->queue.pop_front();
 }
 
 void writer::append(const std::string& line) {

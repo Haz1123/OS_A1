@@ -6,6 +6,7 @@
 #include "writer.h"
 #include <cstdlib>
 #include <filesystem>
+
 /* global variables if needed go here */
 int main(int argc, char** argv) {
     if(argc <= 2) {
@@ -25,6 +26,11 @@ int main(int argc, char** argv) {
     read->run();
     write->run();
     
+    std::cout << "Done.";
+
+    delete read;
+    delete write;
+
     return EXIT_SUCCESS;
 }
 

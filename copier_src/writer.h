@@ -14,6 +14,7 @@ class writer {
      * creates the writer instance that writes out to the file
      **/
     writer(const std::string& name);
+    ~writer();
     /**
      * does the actual writing
      **/

@@ -5,19 +5,21 @@
 #include "reader.h"
 #include <functional>
 
-const int read_buffer_size = 10;
+const int read_buffer_size = 100;
 
 reader::reader(const std::string& name, writer& mywriter)
     : thewriter(mywriter) {
-    // TODO: Init ifstream properly
-    //this->in = new ifstream();
     this->in.open(name);
 }
 
+reader::~reader() {
+    this->in.close();
+}
+
 void reader::run() {
-    char* ingest = new char[read_buffer_size]();
-    this->in.read(ingest, read_buffer_size);
-    //TODO: Check how using a fixed is impacting reads,
-    //      check if last string needs to be trimmed
-    this->thewriter.append(std::string(ingest));
+    std::string ingest = new char[read_buffer_size]();
+    while(!this->in.eof()){
+        std::getline(this->in, ingest);
+        this->thewriter.append(ingest);
+    }
 }
