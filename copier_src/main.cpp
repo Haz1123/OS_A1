@@ -8,8 +8,18 @@
 #include <filesystem>
 #include <pthread.h>
 
+void test() {
+    std::ofstream out;
+    out.open("test.in");
+    for( int i = 0; i < 10000; i ++) {
+        out << i << "TESTTESTTESTTESTTEST" << "\n";
+    }
+    out.close();
+}
+
 /* global variables if needed go here */
 int main(int argc, char** argv) {
+    test();
     if(argc <= 3) {
         std::cout << "Program usage: copier.exe [threads] [source] [destination]";
         exit(1);

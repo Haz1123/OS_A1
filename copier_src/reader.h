@@ -20,6 +20,8 @@ class reader {
 
    private:
     std::ifstream in;
+    int read_lines;
     writer& thewriter;
+    int queued_lines;
 };
 #endif
