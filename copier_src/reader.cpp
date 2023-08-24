@@ -9,6 +9,7 @@
 
 pthread_mutex_t read_lock;
 pthread_mutex_t writer_lock;
+pthread_mutex_t finished_count_lock;
 pthread_cond_t read_order_condition[MAX_SUPPORTED_THREADS];
 
 MyReader::MyReader(const std::string& name, Writer& mywriter)
@@ -16,6 +17,7 @@ MyReader::MyReader(const std::string& name, Writer& mywriter)
     this->in = std::ifstream(name);
     this->read_lines= 0;
     this->queued_lines = 0;
+    this->finished_thread_count = 0;
 }
 
 MyReader::~MyReader() {
@@ -44,16 +46,19 @@ void *read_thread(void *read_thread_params) {
         pthread_mutex_lock(&read_lock);
     }
     pthread_mutex_unlock(&read_lock);
-    while(pthread_mutex_trylock(&writer_lock)) {
-        sleep(1);
+    pthread_mutex_lock(&finished_count_lock);
+    params->finished_thread_count++;
+    if(params->finished_thread_count == params->num_threads) {
+        pthread_mutex_lock(&writer_lock);
+        params->writer.set_eof(true);
+        pthread_mutex_unlock(&writer_lock);
     }
-    params->writer.set_eof(true);
-    pthread_mutex_unlock(&writer_lock);
+    pthread_mutex_unlock(&finished_count_lock);
     pthread_exit(NULL);
 }
 
 void MyReader::run(int num_threads) {
-    this->thread_parameters = new read_thread_params({this->in, this->read_lines, this->thewriter, this->queued_lines, num_threads});
+    this->thread_parameters = new read_thread_params({this->in, this->read_lines, this->thewriter, this->queued_lines, num_threads, this->finished_thread_count});
     for(int i = 0; i < num_threads; i++){
         pthread_create(&this->threads[i], NULL, read_thread, this->thread_parameters);
     }

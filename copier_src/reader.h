@@ -15,6 +15,7 @@ struct read_thread_params {
     Writer& writer;
     int& queued_lines;
     int num_threads;
+    int& finished_thread_count;
 };
 
 class MyReader {
@@ -42,5 +43,6 @@ class MyReader {
     int queued_lines;
     pthread_t threads[MAX_SUPPORTED_THREADS];
     read_thread_params* thread_parameters;
+    int finished_thread_count;
 };
 #endif

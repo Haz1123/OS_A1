@@ -5,6 +5,7 @@ pthread_mutex_t queue_lock;
 pthread_mutex_t writefile_lock;
 pthread_mutex_t eof_reached_lock;
 pthread_cond_t order_condition[MAX_SUPPORTED_THREADS];
+pthread_cond_t write_happened_cond;
 
 Writer::Writer(const std::string& name) {
     this->out = std::ofstream(name);
@@ -20,10 +21,10 @@ Writer::~Writer(){
 
 void *write_thread(void *write_thread_params) {
     struct write_thread_parameters *params = (struct write_thread_parameters *)write_thread_params;
-    
-    // Technically busy waiting here by repeatedly checking the condition.
-    do {
-        pthread_mutex_lock(&queue_lock);
+
+    pthread_mutex_lock(&queue_lock);
+    while( params->eof_reached == false || params->write_queue.size() > 0 ) {
+        // Could be written as a do while. Left as is for clarity.
         while( params->write_queue.size() > 0 ) {
             std::string line_str = params->write_queue.front().line;
             int line = params->write_queue.front().line_number;
@@ -40,8 +41,12 @@ void *write_thread(void *write_thread_params) {
             pthread_mutex_unlock(&writefile_lock);
             pthread_mutex_lock(&queue_lock);
         }
-        pthread_mutex_unlock(&queue_lock);
-    } while( params->eof_reached == false || params->write_queue.size() > 0 );
+        // Check if we need to wait for more lines in the queue.
+        if(params->eof_reached == false ) {
+            pthread_cond_wait(&write_happened_cond, &queue_lock);
+        }
+    }
+    pthread_mutex_unlock(&queue_lock);
     pthread_exit(NULL);
 }
 
@@ -63,12 +68,12 @@ void Writer::append(const file_line line) {
     pthread_mutex_lock(&queue_lock);
     this->queue.emplace_back(line);
     pthread_mutex_unlock(&queue_lock);
+    pthread_cond_broadcast(&write_happened_cond);
 }
 
 void Writer::set_eof(bool eof_reached) {
-    while(pthread_mutex_trylock(&eof_reached_lock)){
-        sleep(1);
-    }
+    pthread_mutex_lock(&eof_reached_lock);
     this->eof_reached = eof_reached;
     pthread_mutex_unlock(&eof_reached_lock);
+    pthread_cond_broadcast(&write_happened_cond);
 }
