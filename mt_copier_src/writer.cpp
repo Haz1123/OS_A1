@@ -8,16 +8,16 @@
 /**
  * provide your implementation for the writer functions here
  **/
-writer::writer(const std::string& name) {
+Writer::Writer(const std::string& name) {
     this->out.open(name);
     this->queue = std::deque<std::string>();
 }
 
-writer::~writer() {
+Writer::~Writer() {
     this->out.close();
 }
 
-void writer::run() {
+void Writer::run() {
     while( this->queue.back() != this->queue.front() ) {
         // TODO:    Check how buffer impacts the end of 
         //          the write. Can't have extra bytes
@@ -30,6 +30,6 @@ void writer::run() {
     this->queue.pop_front();
 }
 
-void writer::append(const std::string& line) {
+void Writer::append(const std::string& line) {
     this->queue.emplace_back(line);
 }

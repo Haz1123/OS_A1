@@ -38,13 +38,19 @@ int main(int argc, char** argv) {
         std::cout << "File:" << infile << " doesn't exist.";
     }
 
-    writer* write = new writer(outfile);
-    reader* read = new reader(infile, *write);
+    Writer* write = new Writer(outfile);
+    MyReader* read = new MyReader(infile, *write);
 
     read->run(num_threads);
     write->run(num_threads);
     
+    read->join_threads(num_threads);
+    write->join_threads(num_threads);
+
     std::cout << "Done.\n";
+
+    delete read;
+    delete write;
 
     return EXIT_SUCCESS;
 }

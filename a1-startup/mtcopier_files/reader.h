@@ -9,7 +9,7 @@
 #include <string>
 #ifndef READER
 #define READER
-class reader {
+class MyReader {
    public:
     /* this class has a bunch of static (which means shared in a class)
      * because we need to share the state between threads. For example, we

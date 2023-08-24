@@ -9,12 +9,12 @@
 /**
  * implement these functions requred for the writer class
  **/
-void writer::init(const std::string& name) {}
+void Writer::init(const std::string& name) {}
 
-void writer::run() {}
+void Writer::run() {}
 
-void* writer::runner(void* arg) { return nullptr; }
+void* Writer::runner(void* arg) { return nullptr; }
 
-void writer::append(const std::string& line) {}
+void Writer::append(const std::string& line) {}
 
-void writer::setfinished() {}
+void Writer::setfinished() {}

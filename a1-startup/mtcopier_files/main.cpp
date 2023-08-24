@@ -9,8 +9,8 @@
  * these need to be global variables as you'll need handle cleaning them up in
  *cleanup which will automatically be called on program exit
  **/
-reader* readers;
-writer* writers;
+MyReader* readers;
+Writer* writers;
 
 void cleanup() {
     /**

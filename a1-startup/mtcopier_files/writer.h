@@ -10,7 +10,7 @@
 #include <string>
 #ifndef WRITER
 #define WRITER
-class writer {
+class Writer {
    public:
     /**
      * Please note that methods and data need to be static as there's a

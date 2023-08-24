@@ -9,10 +9,10 @@
 /**
  * implement the functions needed for this class
  **/
-std::ifstream reader::in;
+std::ifstream MyReader::in;
 
-void reader::init(const std::string& name) {}
+void MyReader::init(const std::string& name) {}
 
-void reader::run() {}
+void MyReader::run() {}
 
-void* reader::runner(void* arg) { return nullptr; }
+void* MyReader::runner(void* arg) { return nullptr; }

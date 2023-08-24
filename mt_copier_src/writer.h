@@ -8,13 +8,13 @@
 #include <deque>
 #ifndef WRITER
 #define WRITER
-class writer {
+class Writer {
    public:
     /**
      * creates the writer instance that writes out to the file
      **/
-    writer(const std::string& name);
-    ~writer();
+    Writer(const std::string& name);
+    ~Writer();
     /**
      * does the actual writing
      **/

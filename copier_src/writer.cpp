@@ -3,82 +3,69 @@
 
 pthread_mutex_t queue_lock;
 pthread_mutex_t writefile_lock;
-pthread_cond_t writefile_cond;
 pthread_mutex_t eof_reached_lock;
+pthread_cond_t order_condition[MAX_SUPPORTED_THREADS];
 
-writer::writer(const std::string& name) {
-    this->out.open(name);
+Writer::Writer(const std::string& name) {
+    this->out = std::ofstream(name);
     this->queue = std::deque<file_line>();
     this->eof_reached = false;
     this->current_line = 0;
 }
 
-struct thread_common_params {
-    std::deque<file_line> * write_queue;
-    std::ofstream * outfile;
-    bool * eof_reached;
-    int * current_line;
-};
-
-struct thread_unique_params {
-    u_long thread_id;
-    thread_common_params *common_params;
-};
+Writer::~Writer(){
+    this->out.close();
+    delete this->thread_config;
+}
 
 void *write_thread(void *write_thread_params) {
-    struct thread_unique_params *params = (struct thread_unique_params *)write_thread_params;
+    struct write_thread_parameters *params = (struct write_thread_parameters *)write_thread_params;
+    
+    // Technically busy waiting here by repeatedly checking the condition.
     do {
-        while(pthread_mutex_trylock(&queue_lock) != 0  ) {
-            sleep(1);
-        };
-            while( params->common_params->write_queue->size() > 0 ) {
-                std::string line_str = params->common_params->write_queue->front().line;
-                int line = params->common_params->write_queue->front().line_number;
-                params->common_params->write_queue->pop_front();
-                pthread_mutex_unlock(&queue_lock);
-                pthread_mutex_lock(&writefile_lock);
-                // Check and wait to ensure ordering in queue
-                while(*params->common_params->current_line != line) {
-                    std::cout << "Write order waiting...\n";
-                    pthread_cond_wait(&writefile_cond, &writefile_lock);
-                }
-                params->common_params->outfile->write(line_str.c_str(), line_str.length());
-                params->common_params->outfile->write("\n", 1);
-                (*params->common_params->current_line)++;
-                pthread_mutex_unlock(&writefile_lock);
-                pthread_cond_broadcast(&writefile_cond);
-                pthread_mutex_lock(&queue_lock);
+        pthread_mutex_lock(&queue_lock);
+        while( params->write_queue.size() > 0 ) {
+            std::string line_str = params->write_queue.front().line;
+            int line = params->write_queue.front().line_number;
+            params->write_queue.pop_front();
+            pthread_mutex_unlock(&queue_lock);
+            pthread_mutex_lock(&writefile_lock);
+            // Check and wait to ensure ordering in queue
+            while(params->current_line != line) {
+                pthread_cond_wait(&order_condition[line % params->num_threads], &writefile_lock);
             }
+            params->outfile << line_str << "\n";
+            params->current_line++;
+            pthread_cond_signal(&order_condition[(line + 1) % params->num_threads]);
+            pthread_mutex_unlock(&writefile_lock);
+            pthread_mutex_lock(&queue_lock);
+        }
         pthread_mutex_unlock(&queue_lock);
-        sleep(1);
-    } while( *params->common_params->eof_reached == false);
+    } while( params->eof_reached == false || params->write_queue.size() > 0 );
     pthread_exit(NULL);
 }
 
-void writer::run(int num_threads) {
-    struct thread_common_params params = {&this->queue, &this->out, &this->eof_reached, &this->current_line};
-    pthread_t threads[100] = {0};
-    // bool enable_write[100] = {true, false};
-    // pthread_cond_t cond_wait[100];
-    for(int i = 0; i < num_threads - 1; i++){
-        struct thread_unique_params i_params = {threads[i], &params};
-        pthread_create(&threads[i], NULL, write_thread, &i_params);
+void Writer::run(int num_threads) {
+    this->thread_config = new write_thread_parameters({this->queue, this->out, this->eof_reached, this->current_line, num_threads});
+    for(int i = 0; i < num_threads; i++){
+        pthread_create(&this->threads[i], NULL, write_thread, this->thread_config);
     }
-    for( int i = 0; i < num_threads; i++ ) {
-        pthread_join(threads[i], NULL);
-    }
-    this->out.close();
 }
 
-void writer::append(const file_line line) {
-    while(pthread_mutex_trylock(&queue_lock) != 0) {
-        sleep(1);
+void Writer::join_threads(int num_threads) {
+    for (int i = 0; i < num_threads; i++)
+    {
+        pthread_join(this->threads[i], NULL);
     }
+}
+
+void Writer::append(const file_line line) {
+    pthread_mutex_lock(&queue_lock);
     this->queue.emplace_back(line);
     pthread_mutex_unlock(&queue_lock);
 }
 
-void writer::set_eof(bool eof_reached) {
+void Writer::set_eof(bool eof_reached) {
     while(pthread_mutex_trylock(&eof_reached_lock)){
         sleep(1);
     }

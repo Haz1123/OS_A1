@@ -7,16 +7,16 @@
 
 const int read_buffer_size = 100;
 
-reader::reader(const std::string& name, writer& mywriter)
+MyReader::MyReader(const std::string& name, Writer& mywriter)
     : thewriter(mywriter) {
     this->in.open(name);
 }
 
-reader::~reader() {
+MyReader::~MyReader() {
     this->in.close();
 }
 
-void reader::run() {
+void MyReader::run() {
     std::string ingest = new char[read_buffer_size]();
     while(!this->in.eof()){
         std::getline(this->in, ingest);

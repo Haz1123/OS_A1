@@ -8,8 +8,8 @@
 /**
  * provide your implementation for the writer functions here
  **/
-writer::writer(const std::string& name) {}
+Writer::Writer(const std::string& name) {}
 
-void writer::run() {}
+void Writer::run() {}
 
-void writer::append(const std::string& line) {}
+void Writer::append(const std::string& line) {}

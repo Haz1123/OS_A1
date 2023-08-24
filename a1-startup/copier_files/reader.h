@@ -8,17 +8,17 @@
 #include <string>
 #ifndef READER
 #define READER
-class reader {
+class MyReader {
    public:
     /* create a reader that reads each line of the file and appends it to the
      * writer's queue
      */
-    reader(const std::string& name, writer& mywriter);
+    MyReader(const std::string& name, Writer& mywriter);
     /* perform the reading from the file */
     void run();
 
    private:
     std::ifstream in;
-    writer& thewriter;
+    Writer& thewriter;
 };
 #endif

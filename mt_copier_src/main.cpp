@@ -20,8 +20,8 @@ int main(int argc, char** argv) {
         std::cout << "File:" << infile << " doesn't exist.";
     }
 
-    writer* write = new writer(outfile);
-    reader* read = new reader(infile, *write);
+    Writer* write = new Writer(outfile);
+    MyReader* read = new MyReader(infile, *write);
 
     read->run();
     write->run();
