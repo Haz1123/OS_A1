@@ -46,6 +46,9 @@ void *write_thread(void *write_thread_params) {
                 pthread_cond_wait(&order_condition[line_num & 127], &write_lock);
             }
             params->outfile << line << "\n";
+            if(params->written_lines % 100 == 0){
+                std::cout << params->written_lines;
+            }
             params->written_lines++;
             pthread_mutex_unlock(&write_lock);
         }
