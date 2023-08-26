@@ -33,9 +33,13 @@ void *write_thread(void *write_thread_params) {
         params->current_line++;
         pthread_mutex_unlock(&line_count_lock);
         pthread_mutex_lock(&queue_locks[line_num & 127]);
-        if(params->line_queues[line_num & 127].size() == 0){
-            pthread_mutex_unlock(&queue_locks[line_num & 127]);
+        while(params->line_queues[line_num & 127].size() == 0 && !params->eof_reached){
+            std::cout << "write thread dead in water " << params->current_line << "\n";
+            sleep(1);
             //pthread_cond_wait(&write_happened_cond, &queue_locks[line_num & 127]);
+        }
+        if(params->line_queues[line_num & 127].size() != 0) {
+            pthread_mutex_unlock(&queue_locks[line_num & 127]);
         } else {
             held_line = params->line_queues[line_num & 127].front().line_number;
             std::string line = params->line_queues[line_num & 127].front().line;
@@ -43,10 +47,11 @@ void *write_thread(void *write_thread_params) {
             pthread_mutex_unlock(&queue_locks[line_num & 127]);
             pthread_mutex_lock(&write_lock);
             while(held_line != params->written_lines){
+                std::cout << "Wait to write:" << held_line << ":"<<params->written_lines << "\n";
                 pthread_cond_wait(&order_condition[line_num & 127], &write_lock);
             }
             params->outfile << line << "\n";
-            if((params->written_lines % 100) == 0){
+            if((params->written_lines % 1000) == 0){
                 std::cout << "WRITE:" << params->written_lines << "\n";
             }
             params->written_lines++;

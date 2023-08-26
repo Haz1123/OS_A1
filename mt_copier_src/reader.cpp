@@ -33,7 +33,7 @@ void *read_thread(void *read_thread_params) {
         std::getline(params->infile, ingest.line);
         ingest.line_number = params->current_line;
         params->current_line++;
-        if((params->current_line % 100) == 0) {
+        if((params->current_line % 1000) == 0) {
             std::cout << "READ:" << params->current_line << "\n";
         }
         pthread_mutex_unlock(&read_lock);
@@ -62,7 +62,10 @@ void *read_thread(void *read_thread_params) {
         pthread_mutex_lock(&writer_lock);
         params->writer.read_finished(params->queued_lines);
         pthread_mutex_unlock(&writer_lock);
-    }
+        std:: cout << "Last thread exit.\n";
+    } else {
+        std::cout << "Thread:" << params->finished_thread_count << ":" << params->num_threads << " exit\n";
+    };
     pthread_mutex_unlock(&finished_count_lock);
 
     pthread_exit(NULL);
