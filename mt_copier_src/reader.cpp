@@ -38,14 +38,15 @@ void *read_thread(void *read_thread_params) {
             std::cout << "READ:" << params->current_line << "\n";
         }
         pthread_mutex_unlock(&read_lock);
-
+        std::cout << "locking writer\n";
         pthread_mutex_lock(&writer_lock);
         // Check if the current line will write out of order
         while(ingest.line_number > (params->writer.checkQueueInsert(ingest.line_number) + 128)){
             // Tried to insert in wrong order.
-            std::cout << "order incorrect!\n";
+            std::cout << "waiting order\n";
             pthread_cond_wait(&read_order_condition[ingest.line_number & 127], &writer_lock);
         }
+        std::cout << "adding to writer\n";
         params->writer.append(ingest);
         params->queued_lines++;
         pthread_cond_broadcast(&read_order_condition[(ingest.line_number) & 127]);
