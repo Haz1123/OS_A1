@@ -75,6 +75,7 @@ void *read_thread(void *read_thread_params) {
 }
 
 void MyReader::run(int num_threads) {
+    pthread_mutex_init(&writer_lock, NULL);
     this->thread_parameters = new read_thread_params({this->in, this->read_lines, this->thewriter, this->queued_lines, num_threads, this->finished_thread_count});
     for(int i = 0; i < num_threads; i++){
         pthread_create(&this->threads[i], NULL, read_thread, this->thread_parameters);
