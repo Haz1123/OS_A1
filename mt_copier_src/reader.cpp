@@ -43,6 +43,7 @@ void *read_thread(void *read_thread_params) {
         // Check if the current line will write out of order
         while(ingest.line_number > (params->writer.checkQueueInsert(ingest.line_number) + 128)){
             // Tried to insert in wrong order.
+            std::cout << "order incorrect!\n";
             pthread_cond_wait(&read_order_condition[ingest.line_number & 127], &writer_lock);
         }
         params->writer.append(ingest);
