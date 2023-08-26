@@ -6,8 +6,25 @@
 #include <iostream>
 #include <string>
 #include <deque>
+
 #ifndef WRITER
 #define WRITER
+
+const int MAX_SUPPORTED_THREADS = 100;
+
+struct file_line {
+    std::string line;
+    int line_number;
+};
+
+struct write_thread_parameters {
+    std::deque<file_line>& write_queue;
+    std::ofstream& outfile;
+    bool& eof_reached;
+    int& current_line;
+    int num_threads;
+};
+
 class Writer {
    public:
     /**
@@ -16,17 +33,37 @@ class Writer {
     Writer(const std::string& name);
     ~Writer();
     /**
-     * does the actual writing
+     * @brief Starts running writer threads
+     * 
+     * @param num_threads Number of threads to start.
      **/
-    void run();
+    void run(int num_threads);
     /**
-     * appends a line from the file read in to be output ... needed by the
-     * reader class
+     * @brief Waits for all threads to finish execution.
+     * 
+     * @param num_threads Number of threads started to join
+     */
+    void join_threads(int num_threads);
+    /**
+     * @brief Adds a new line to the write queue.
+     * It is assumed that .append is called in order.
      **/
-    void append(const std::string& line);
+    void append(file_line);
 
+    /**
+     * @brief Sets eof_reached to true. 
+     * Indicates that the file has finished reading and no
+     * more lines will be added to the queue.
+     */
+    void read_finished();
+
+    std::deque<file_line> queue;
    private:
     std::ofstream out;
-    std::deque<std::string> queue;
+    int current_line;
+    bool eof_reached;
+    pthread_t threads[MAX_SUPPORTED_THREADS];
+    write_thread_parameters* thread_config;
 };
+
 #endif
