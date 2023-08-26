@@ -31,6 +31,7 @@ void *read_thread(void *read_thread_params) {
     while(!params->infile.eof()){
         file_line ingest;
         std::getline(params->infile, ingest.line);
+        std::cout << ingest.line << "\n";
         ingest.line_number = params->current_line;
         params->current_line++;
         if((params->current_line % 1000) == 0) {
