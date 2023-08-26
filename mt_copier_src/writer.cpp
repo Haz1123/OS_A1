@@ -34,7 +34,6 @@ void *write_thread(void *write_thread_params) {
         pthread_mutex_unlock(&line_count_lock);
         pthread_mutex_lock(&queue_locks[line_num & 127]);
         if(params->line_queues[line_num & 127].size() == 0){
-            std::cout << "Didn't find any lines for:" << line_num << ".\n";
             pthread_mutex_unlock(&queue_locks[line_num & 127]);
             //pthread_cond_wait(&write_happened_cond, &queue_locks[line_num & 127]);
         } else {
@@ -44,15 +43,10 @@ void *write_thread(void *write_thread_params) {
             pthread_mutex_unlock(&queue_locks[line_num & 127]);
             pthread_mutex_lock(&write_lock);
             while(held_line != params->written_lines){
-                if(held_line - 128 == params->written_lines) {
-                    std::cout << "I'm the dumb fuck!" << "\n";
-                }
-                std::cout << "Waiting! \n" << held_line << " : " << params->written_lines << "\n";
                 pthread_cond_wait(&order_condition[line_num & 127], &write_lock);
             }
             params->outfile << line << "\n";
             params->written_lines++;
-            //std::cout << "release: " << ((line_num + 1) & 127) << "\n";
             pthread_mutex_unlock(&write_lock);
         }
         pthread_cond_broadcast(&order_condition[(line_num + 1) & 127]);
