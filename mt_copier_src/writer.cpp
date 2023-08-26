@@ -10,6 +10,9 @@ pthread_mutex_t write_lock;
 // Condition trigger aligned to each queue.
 // Helps wake up each thread in order as required.
 pthread_cond_t order_condition[128];
+// Condition trigger for writes to queues.
+// Prevents a deadlock issue.
+pthread_cond_t queue_conds[128];
 
 Writer::Writer(const std::string& name) {
     this->out = std::ofstream(name);
@@ -34,9 +37,8 @@ void *write_thread(void *write_thread_params) {
         pthread_mutex_unlock(&line_count_lock);
         pthread_mutex_lock(&queue_locks[line_num & 127]);
         while(params->line_queues[line_num & 127].size() == 0 && !params->eof_reached){
-            std::cout << "write thread dead in water " << params->current_line << "\n";
-            sleep(1);
-            //pthread_cond_wait(&write_happened_cond, &queue_locks[line_num & 127]);
+            std::cout << "Queue empty!" << (line_num & 127) << "\n";
+            pthread_cond_wait(&queue_conds[line_num & 127], &queue_locks[line_num & 127]);
         }
         if(params->line_queues[line_num & 127].size() != 0) {
             pthread_mutex_unlock(&queue_locks[line_num & 127]);
@@ -79,11 +81,13 @@ void Writer::join_threads(int num_threads) {
 void Writer::append(const file_line line) {
     pthread_mutex_lock(&queue_locks[line.line_number & 127]);
     this->lines[line.line_number & 127].emplace_back(line);
+    pthread_cond_broadcast(&queue_conds[line.line_number & 127]);
     pthread_mutex_unlock(&queue_locks[line.line_number & 127]);
 }
 
 int Writer::checkQueueInsert(int line_num) {
     int value;
+    std:: cout << "Checking queue insert\n";
     pthread_mutex_lock(&queue_locks[line_num & 127]);
     if(!this->lines[line_num & 127].empty()){
         value = this->lines[line_num & 127].back().line_number;
