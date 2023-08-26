@@ -54,11 +54,11 @@ int main(int argc, char** argv) {
     const clock_t init_finish = timer->get_time();
 
     read->run(num_threads);
-    write->run(num_threads);
     read->join_threads(num_threads);
-    std::cout << "read fin\n";
+    
     const clock_t read_finish = timer->get_time();
 
+    write->run(num_threads);
     write->join_threads(num_threads);
 
     const clock_t write_finish = timer->get_time();
