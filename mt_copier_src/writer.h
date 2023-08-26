@@ -15,14 +15,19 @@ const int MAX_SUPPORTED_THREADS = 100;
 struct file_line {
     std::string line;
     int line_number;
+
 };
 
+typedef std::deque<file_line> queue_type[128];
+
 struct write_thread_parameters {
-    std::deque<file_line>& write_queue;
+    queue_type& line_queues;
     std::ofstream& outfile;
     bool& eof_reached;
     int& current_line;
     int num_threads;
+    int& total_lines;
+    int& written_lines;
 };
 
 class Writer {
@@ -55,15 +60,18 @@ class Writer {
      * Indicates that the file has finished reading and no
      * more lines will be added to the queue.
      */
-    void read_finished();
+    void read_finished(int total_lines);
+    int checkQueueInsert(int queue_num);
 
-    std::deque<file_line> queue;
+    queue_type lines;
    private:
     std::ofstream out;
     int current_line;
     bool eof_reached;
     pthread_t threads[MAX_SUPPORTED_THREADS];
     write_thread_parameters* thread_config;
+    int total_lines;
+    int written_lines;
 };
 
 #endif

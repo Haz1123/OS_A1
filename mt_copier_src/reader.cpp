@@ -10,7 +10,7 @@
 pthread_mutex_t read_lock;
 pthread_mutex_t writer_lock;
 pthread_mutex_t finished_count_lock;
-pthread_cond_t read_order_condition[MAX_SUPPORTED_THREADS];
+pthread_cond_t read_order_condition[127];
 
 MyReader::MyReader(const std::string& name, Writer& mywriter)
     : thewriter(mywriter) {
@@ -36,14 +36,16 @@ void *read_thread(void *read_thread_params) {
         pthread_mutex_unlock(&read_lock);
 
         pthread_mutex_lock(&writer_lock);
-        // Check if the current line is the next line in order.
-        //if(ingest.line_number != params->queued_lines){
-            // Wait for previous line to be written.
-            //pthread_cond_wait(&read_order_condition[1], &writer_lock);
-        //}
+        // Check if the current line will write out of order
+        int i = params->writer.checkQueueInsert(ingest.line_number);
+        std::cout << i;
+        while(ingest.line_number > (params->writer.checkQueueInsert(ingest.line_number) + 128)){
+            // Tried to insert in wrong order.
+            pthread_cond_wait(&read_order_condition[ingest.line_number & 127], &writer_lock);
+        }
         params->writer.append(ingest);
-        //params->queued_lines++;
-        //pthread_cond_broadcast(&read_order_condition[1]);
+        params->queued_lines++;
+        pthread_cond_broadcast(&read_order_condition[(ingest.line_number) & 127]);
         pthread_mutex_unlock(&writer_lock);
         
         pthread_mutex_lock(&read_lock);
@@ -57,7 +59,7 @@ void *read_thread(void *read_thread_params) {
     // Check if this thread is the last thread to finish writing.
     if(params->finished_thread_count == params->num_threads) {
         pthread_mutex_lock(&writer_lock);
-        params->writer.read_finished();
+        params->writer.read_finished(params->queued_lines);
         pthread_mutex_unlock(&writer_lock);
     }
     pthread_mutex_unlock(&finished_count_lock);

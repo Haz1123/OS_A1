@@ -56,16 +56,8 @@ int main(int argc, char** argv) {
     read->run(num_threads);
     read->join_threads(num_threads);
 
-    struct{
-        bool operator()(const file_line& lhs,const file_line& rhs){
-            return lhs.line_number < rhs.line_number;
-        }
-    } customSort;
-
-    std::sort(write->queue.begin(), write->queue.end(), customSort);
     const clock_t read_finish = timer->get_time();
 
-    std::cout << "done.\n";
     write->run(num_threads);
     write->join_threads(num_threads);
 
