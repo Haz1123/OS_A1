@@ -55,7 +55,6 @@ int main(int argc, char** argv) {
     delete read;
     delete write;
 
-    sleep(10);
     const clock_t cleanup_finish = timer->get_time();
 
     timer->print_results(start_time, init_finish, read_finish, write_finish, cleanup_finish);
