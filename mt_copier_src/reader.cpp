@@ -47,12 +47,12 @@ void *read_thread(void *read_thread_params) {
         while(ingest.line_number > (params->writer.checkQueueInsert(ingest.line_number) + 129)){
             // Tried to insert in wrong order.
             std::cout << "waiting order\n";
-            pthread_cond_wait(&read_order_condition[ingest.line_number & 127], &writer_lock);
+            pthread_cond_wait(&read_order_condition[1], &writer_lock);
         }
         std::cout << "adding to writer\n";
         params->writer.append(ingest);
         params->queued_lines++;
-        pthread_cond_broadcast(&read_order_condition[(ingest.line_number) & 127]);
+        pthread_cond_broadcast(&read_order_condition[1]);
         pthread_mutex_unlock(&writer_lock);
         
         pthread_mutex_lock(&read_lock);
