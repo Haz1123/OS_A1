@@ -11,6 +11,9 @@
 #include <map>
 #include <vector>
 #include "timer.h"
+// Using these for 'clock time'
+#include <chrono>
+#include <ctime>
 
 const std::string PROGRAM_USAGE = "Program usage: copier.exe n_threads source destination [-t]";
 
@@ -43,6 +46,8 @@ int main(int argc, char** argv) {
         std::cout << "File:" << infile << " doesn't exist.";
     }
     
+    std::chrono::_V2::system_clock::time_point start = std::chrono::system_clock::now();
+
     write_queue_t write_queue;
 
     Writer* write = new Writer(outfile, write_queue, queue_mutex);
@@ -60,8 +65,11 @@ int main(int argc, char** argv) {
     write->run(num_threads);    
     write->join_threads(num_threads);
     if(timer_enabled){std::cout << "Write finished.\n";};
+    std::chrono::_V2::system_clock::time_point end = std::chrono::system_clock::now();
 
     if(timer_enabled){
+        std::chrono::duration<double> clock_time_taken = end - start;
+        std::cout << "Time taken: " << clock_time_taken.count() << " seconds \n";
         // Reader loop info
         std::vector<clock_t> read_mutex_times;
         std::vector<clock_t> line_read_times;
@@ -89,7 +97,6 @@ int main(int argc, char** argv) {
             write_order_times.emplace_back(x.tp_write_order_time);
             write_times.emplace_back(x.tp_write_time);
         }
-        std::cout << read_mutex_times.size() << "\n";
         // Get times 
         double read_queue_mutex_sum = (double)time_helper::sum_times_real(read_mutex_times) ;
         double read_line_read_sum = (double)time_helper::sum_times_real(line_read_times) ;
