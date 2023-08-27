@@ -32,34 +32,22 @@ void *read_thread(void *read_thread_params) {
     struct read_thread_params *params = (struct read_thread_params *)read_thread_params;
     pthread_mutex_lock(&read_lock);
     while(!params->infile.eof()){
-        file_line* ingest = new file_line();
-        std::getline(params->infile, ingest->line);
-        ingest->line_number = params->current_line;
-        ingest->read = true;
-        ingest->written = false;
+        file_line ingest;
+        std::getline(params->infile, ingest.line);
+        ingest.line_number = params->current_line;
+        ingest.read = true;
+        ingest.written = false;
         params->current_line++;
-        if((params->current_line % 1000000) == 0) {
+        if((params->current_line % 100) == 0) {
             std::cout << "READ:" << params->current_line << "\n";
         }
         pthread_mutex_unlock(&read_lock);
         
-        pthread_mutex_lock(&params->queue_slot_mutexs[ingest->line_number & 255]);
-        // Validate line can be written to
-        // Also validate line ordering is correct
-        while(params->write_queue[ingest->line_number & 255]->read == true || ingest->line_number > params->write_queue[ingest->line_number & 255]->line_number + 256){
-            if(ingest->line_number > params->write_queue[ingest->line_number & 255]->line_number + 256){
-                //std::cout<<"I'm out of order to queue! Wait for" << (ingest->line_number & 255) << "\n";
-            } else {
-                //std::cout << "I'm waiting for something to write!" << ingest->line_number << "\n";
-            }
-            pthread_cond_wait(&params->queue_wait_conds[ingest->line_number & 255], &params->queue_slot_mutexs[ingest->line_number & 255]);
-        }
-        params->write_queue[ingest->line_number & 255] = ingest;
-        // Wake up writer/other readers
-        pthread_cond_broadcast(&params->queue_wait_conds[ingest->line_number & 255]);
-        // Wake up next reader thread?
-        pthread_cond_broadcast(&params->queue_wait_conds[(ingest->line_number + 1) & 255]);
-        pthread_mutex_unlock(&params->queue_slot_mutexs[ingest->line_number & 255]);
+        pthread_mutex_lock(&params->queue_slot_mutexs[ingest.line_number & 255]);
+        params->write_queue[ingest.line_number & 255][ingest.line_number] = ingest;
+        // Wake up writer threads
+        pthread_cond_broadcast(&params->queue_wait_conds[ingest.line_number & 255]);
+        pthread_mutex_unlock(&params->queue_slot_mutexs[ingest.line_number & 255]);
         // Lock read ahead of loop
         pthread_mutex_lock(&read_lock);
     }

@@ -8,6 +8,7 @@
 #include <filesystem>
 #include <pthread.h>
 #include <time.h>
+#include <map>
 #include "timer.h"
 
 const std::string PROGRAM_USAGE = "Program usage: copier.exe n_threads source destination [-t]";
@@ -50,13 +51,7 @@ int main(int argc, char** argv) {
 
     const clock_t start_time = timer->get_time();
     
-    write_queue_t write_queue = {nullptr};
-
-    for (int i = 0; i < 256; i++)
-    {
-        write_queue[i] = new file_line();
-    }
-    
+    write_queue_t write_queue;
 
     Writer* write = new Writer(outfile, write_queue, queue_slot_mutexs, queue_wait_conds);
     MyReader* read = new MyReader(infile, *write, write_queue, queue_slot_mutexs, queue_wait_conds);

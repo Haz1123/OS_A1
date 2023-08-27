@@ -6,6 +6,7 @@
 #include <iostream>
 #include <string>
 #include <deque>
+#include <map>
 
 #ifndef WRITER
 #define WRITER
@@ -20,7 +21,8 @@ struct file_line {
 };
 
 typedef file_line* file_line_ptr;
-typedef file_line_ptr write_queue_t[256];
+typedef std::map<int, file_line> write_sub_queue;
+typedef write_sub_queue write_queue_t[256];
 typedef pthread_mutex_t queue_slot_mutexs_t[256];
 typedef pthread_cond_t queue_wait_conds_t[256];
 
