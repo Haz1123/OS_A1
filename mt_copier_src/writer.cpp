@@ -41,13 +41,13 @@ void *write_thread(void *write_thread_params) {
         pthread_mutex_unlock(&line_count_lock);
         pthread_mutex_lock(&params->queue_slot_mutexs[line_num & QUEUE_ACCESS_BITMASK]);
         // Check if expected line is in the queue
-        while(!params->line_queues[line_num & QUEUE_ACCESS_BITMASK].contains(line_num)) {
+        while(!(params->line_queues[line_num & QUEUE_ACCESS_BITMASK].top().line_number == line_num)) {
             std::cout << "Write queue missing:" << line_num << "\n";
             pthread_cond_wait(&params->queue_wait_conds[line_num & QUEUE_ACCESS_BITMASK], &params->queue_slot_mutexs[line_num & QUEUE_ACCESS_BITMASK]);
             std:: cout << "Woke up" << line_num << "\n";
         }
-        file_line line = params->line_queues[line_num & QUEUE_ACCESS_BITMASK][line_num];
-        params->line_queues[line_num & QUEUE_ACCESS_BITMASK].erase(line_num);
+        file_line line = params->line_queues[line_num & QUEUE_ACCESS_BITMASK].top();
+        params->line_queues[line_num & QUEUE_ACCESS_BITMASK].pop();
         pthread_mutex_unlock(&params->queue_slot_mutexs[line_num & QUEUE_ACCESS_BITMASK]);
         // Check for 'empty' lines.
         if(line.line_number != -1){
@@ -97,8 +97,8 @@ void Writer::read_finished(int total_lines) {
     {
         std::cout << "Adding dummy line:" << (total_lines + i) << "\n";
         pthread_mutex_lock(&this->queue_mutexes[(total_lines + i) & QUEUE_ACCESS_BITMASK]); 
-        file_line dummyLine = file_line({"", -1});
-        this->write_queue[(total_lines + i) & QUEUE_ACCESS_BITMASK][total_lines + i] = dummyLine;
+        file_line dummyLine = file_line({"", total_lines + i});
+        this->write_queue[(total_lines + i) & QUEUE_ACCESS_BITMASK].push(dummyLine);
         pthread_cond_broadcast(&this->queue_slot_conds[(total_lines + i) & QUEUE_ACCESS_BITMASK]);
         pthread_mutex_unlock(&this->queue_mutexes[(total_lines + i) & QUEUE_ACCESS_BITMASK]);
     }

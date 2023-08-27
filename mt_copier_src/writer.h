@@ -8,6 +8,7 @@
 #include <deque>
 #include <map>
 #include <cmath>
+#include <queue>
 
 #ifndef WRITER
 #define WRITER
@@ -21,10 +22,21 @@ const int QUEUE_ACCESS_BITMASK = QUEUE_ARRAY_SIZE - 1;
 struct file_line {
     std::string line;
     int line_number = 0;
+
+    bool operator<(const file_line& rhs){
+        return this->line_number < rhs.line_number;
+    }
+    bool operator>(const file_line& rhs){
+        return this->line_number > rhs.line_number;
+    }
+    bool operator()(const file_line& lhs,const file_line& rhs) {
+        return lhs.line_number > rhs.line_number;
+    }
 };
 
+
 typedef file_line* file_line_ptr;
-typedef std::map<int, file_line> write_sub_queue;
+typedef std::priority_queue<file_line, std::vector<file_line>, file_line> write_sub_queue;
 typedef write_sub_queue write_queue_t[QUEUE_ARRAY_SIZE];
 typedef pthread_mutex_t queue_slot_mutexs_t[QUEUE_ARRAY_SIZE];
 typedef pthread_cond_t queue_wait_conds_t[QUEUE_ARRAY_SIZE];
