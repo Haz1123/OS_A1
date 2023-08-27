@@ -34,8 +34,8 @@ void *write_thread(void *write_thread_params) {
     while(params->eof_reached == false || line_num <= params->total_lines){
         line_num = params->next_line_num_read;
         params->next_line_num_read++;
-        if(params->next_line_num_read % 100 == 0) {
-            std::cout << "Write:" << params->next_line_num_read;
+        if(params->next_line_num_read % 1000 == 0) {
+            std::cout << "Write:" << params->next_line_num_read << "\n";
         }
         pthread_mutex_unlock(&line_count_lock);
         pthread_mutex_lock(&params->queue_slot_mutexs[line_num & 255]);
