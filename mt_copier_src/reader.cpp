@@ -35,12 +35,7 @@ void *read_thread(void *read_thread_params) {
         file_line ingest;
         std::getline(params->infile, ingest.line);
         ingest.line_number = params->current_line;
-        ingest.read = true;
-        ingest.written = false;
         params->current_line++;
-        if((params->current_line % 100000) == 0) {
-            std::cout << "READ:" << params->current_line << "\n";
-        }
         pthread_mutex_unlock(&read_lock);
         
         pthread_mutex_lock(&params->queue_slot_mutexs[ingest.line_number & 255]);

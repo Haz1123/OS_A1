@@ -16,8 +16,6 @@ const int MAX_SUPPORTED_THREADS = 100;
 struct file_line {
     std::string line;
     int line_number = 0;
-    bool read = false;
-    bool written = true;
 };
 
 typedef file_line* file_line_ptr;

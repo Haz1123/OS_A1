@@ -34,6 +34,9 @@ void *write_thread(void *write_thread_params) {
     while(params->eof_reached == false || line_num <= params->total_lines){
         line_num = params->next_line_num_read;
         params->next_line_num_read++;
+        if(params->next_line_num_read % 100000 == 0) {
+            std::cout << "Write:" << params->next_line_num_read;
+        }
         pthread_mutex_unlock(&line_count_lock);
         pthread_mutex_lock(&params->queue_slot_mutexs[line_num & 255]);
         // Check if expected line is in the queue
@@ -47,10 +50,6 @@ void *write_thread(void *write_thread_params) {
         pthread_mutex_unlock(&params->queue_slot_mutexs[line_num & 255]);
         // Check for 'empty' lines.
         if(line.line_number != -1){
-            if(line_num != line.line_number){
-                std::cout << "SOMETHING GOT READ OUT OF ORDER!!!!!\n";
-                pthread_exit(NULL);
-            }
             pthread_mutex_lock(&write_lock);
             while(params->next_line_num_write != line.line_number) {
                 //std::cout << "Waiting on write ordering:" << line_num << ":" << params->next_line_num_write << "\n";
@@ -61,15 +60,12 @@ void *write_thread(void *write_thread_params) {
             params->next_line_num_write++;
             pthread_cond_broadcast(&write_order_cond[(line_num + 1) & 255]);
             pthread_mutex_unlock(&write_lock);
-        } else {
-            //std::cout << "read thingy empty:" << line_num << "\n";
-            pthread_mutex_unlock(&params->queue_slot_mutexs[line_num & 255]);
         }
         // Lock ahead of while condition check
         pthread_mutex_lock(&line_count_lock);
     }
     pthread_mutex_unlock(&line_count_lock);
-    std::cout << "Write thread finish\n";
+    std::cout << "Write thread finished.\n";
     pthread_exit(NULL);
 }
 
@@ -100,7 +96,7 @@ void Writer::read_finished(int total_lines) {
     {
         std::cout << "Adding dummy line:" << (total_lines + i) << "\n";
         pthread_mutex_lock(&this->queue_mutexes[(total_lines + i) & 255]); 
-        file_line dummyLine = file_line({"", -1, false, false});
+        file_line dummyLine = file_line({"", -1});
         this->write_queue[(total_lines + i) & 255][total_lines + i] = dummyLine;
         pthread_cond_broadcast(&this->queue_slot_conds[(total_lines + i) & 255]);
         pthread_mutex_unlock(&this->queue_mutexes[(total_lines + i) & 255]);
