@@ -22,7 +22,7 @@ const int QUEUE_ACCESS_BITMASK = QUEUE_ARRAY_SIZE - 1;
 
 
 struct file_line {
-    std::string line;
+    char line[500] = {'\0'};
     int line_number = 0;
 };
 

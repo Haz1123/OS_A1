@@ -36,14 +36,13 @@ void *read_thread(void *read_thread_params) {
     write_queue_t local_queue;
     pthread_mutex_lock(&read_lock);
     while(!params->infile.eof()){
-        std::getline(params->infile, ingest.line);
+        params->infile.read(ingest.line, 500);
         ingest.line_number = params->finished_read_lines;
         params->finished_read_lines++;
         pthread_mutex_unlock(&read_lock);
         if((ingest.line_number % 100000) == 0){
             std::cout << "READ:" << ingest.line_number << "\n";
         }
-        ingest.line.append("\n");
         //pthread_mutex_lock(&params->queue_mutex);
         local_queue.insert(ingest);
         //pthread_mutex_unlock(&params->queue_mutex);
