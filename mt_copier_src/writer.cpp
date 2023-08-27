@@ -50,14 +50,14 @@ void *write_thread(void *write_thread_params) {
         if(timer){tp_write_lock = clock();}
         while(params->next_line_num_write != line.line_number) {
             std::cout << "Thread:"<<line.line_number << "waiting on " << params->next_line_num_write << "\n";
-            pthread_cond_wait(&write_order_cond[line.line_number & QUEUE_ACCESS_BITMASK], &write_lock);\
+            pthread_cond_wait(&write_order_cond[line.line_number & ORDER_ACCESS_BITMASK], &write_lock);\
             //std::cout << "Thread:" << line->line_number << "woken up \n";
         }
         if(timer){tp_line_order = clock();}
         //std::cout << line->line << "---" << line->line_number << "\n";
         params->outfile << line.line;
         params->next_line_num_write++;
-        pthread_cond_broadcast(&write_order_cond[(line.line_number + 1) & QUEUE_ACCESS_BITMASK]);
+        pthread_cond_broadcast(&write_order_cond[(line.line_number + 1) & ORDER_ACCESS_BITMASK]);
         if((line.line_number % 100000) == 0){
             std::cout << "WRITE:" << line.line_number << "\n";
         }

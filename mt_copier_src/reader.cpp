@@ -36,7 +36,7 @@ void *read_thread(void *read_thread_params) {
     write_queue_t local_queue;
     pthread_mutex_lock(&read_lock);
     while(!params->infile.eof()){
-        params->infile.read(ingest.line, 500);
+        params->infile.read(ingest.line, READ_CHUNK_SIZE);
         ingest.line_number = params->finished_read_lines;
         params->finished_read_lines++;
         pthread_mutex_unlock(&read_lock);

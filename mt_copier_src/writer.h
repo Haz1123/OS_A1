@@ -17,12 +17,14 @@
 const int MAX_SUPPORTED_THREADS = 100;
 // Must be a power of 2. Used to reduce modulo operators in loops.
 // Can't set via function as arrays are static.
-const int QUEUE_ARRAY_SIZE = 256;
-const int QUEUE_ACCESS_BITMASK = QUEUE_ARRAY_SIZE - 1;
+const int ORDER_ARRAY_SIZE = 256;
+const int ORDER_ACCESS_BITMASK = ORDER_ARRAY_SIZE - 1;
+// Number of characters to try and read at a time.
+const int READ_CHUNK_SIZE = 1024;
 
 
 struct file_line {
-    char line[500] = {'\0'};
+    char line[READ_CHUNK_SIZE] = {'\0'};
     int line_number = 0;
 };
 
