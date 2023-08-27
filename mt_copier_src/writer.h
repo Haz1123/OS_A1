@@ -7,11 +7,16 @@
 #include <string>
 #include <deque>
 #include <map>
+#include <cmath>
 
 #ifndef WRITER
 #define WRITER
 
 const int MAX_SUPPORTED_THREADS = 100;
+// Must be a power of 2. Used to reduce modulo operators in loops.
+// Can't set via function as arrays are static.
+const int QUEUE_ARRAY_SIZE = 256;
+const int QUEUE_ACCESS_BITMASK = QUEUE_ARRAY_SIZE - 1;
 
 struct file_line {
     std::string line;
@@ -20,9 +25,9 @@ struct file_line {
 
 typedef file_line* file_line_ptr;
 typedef std::map<int, file_line> write_sub_queue;
-typedef write_sub_queue write_queue_t[256];
-typedef pthread_mutex_t queue_slot_mutexs_t[256];
-typedef pthread_cond_t queue_wait_conds_t[256];
+typedef write_sub_queue write_queue_t[QUEUE_ARRAY_SIZE];
+typedef pthread_mutex_t queue_slot_mutexs_t[QUEUE_ARRAY_SIZE];
+typedef pthread_cond_t queue_wait_conds_t[QUEUE_ARRAY_SIZE];
 
 struct write_thread_parameters {
     std::ofstream& outfile;

@@ -38,11 +38,11 @@ void *read_thread(void *read_thread_params) {
         params->current_line++;
         pthread_mutex_unlock(&read_lock);
         
-        pthread_mutex_lock(&params->queue_slot_mutexs[ingest.line_number & 255]);
-        params->write_queue[ingest.line_number & 255][ingest.line_number] = ingest;
+        pthread_mutex_lock(&params->queue_slot_mutexs[ingest.line_number & QUEUE_ACCESS_BITMASK]);
+        params->write_queue[ingest.line_number & QUEUE_ACCESS_BITMASK][ingest.line_number] = ingest;
         // Wake up writer threads
-        pthread_cond_broadcast(&params->queue_wait_conds[ingest.line_number & 255]);
-        pthread_mutex_unlock(&params->queue_slot_mutexs[ingest.line_number & 255]);
+        pthread_cond_broadcast(&params->queue_wait_conds[ingest.line_number & QUEUE_ACCESS_BITMASK]);
+        pthread_mutex_unlock(&params->queue_slot_mutexs[ingest.line_number & QUEUE_ACCESS_BITMASK]);
         // Lock read ahead of loop
         pthread_mutex_lock(&read_lock);
     }

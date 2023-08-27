@@ -34,31 +34,32 @@ void *write_thread(void *write_thread_params) {
     while(params->eof_reached == false || line_num <= params->total_lines){
         line_num = params->next_line_num_read;
         params->next_line_num_read++;
-        if(params->next_line_num_read % 100000 == 0) {
+        // Magic number. Remove this for the love of god.
+        if(params->next_line_num_read & 1048575 == 0) {
             std::cout << "Write:" << params->next_line_num_read << "\n";
         }
         pthread_mutex_unlock(&line_count_lock);
-        pthread_mutex_lock(&params->queue_slot_mutexs[line_num & 255]);
+        pthread_mutex_lock(&params->queue_slot_mutexs[line_num & QUEUE_ACCESS_BITMASK]);
         // Check if expected line is in the queue
-        while(!params->line_queues[line_num & 255].contains(line_num)) {
+        while(!params->line_queues[line_num & QUEUE_ACCESS_BITMASK].contains(line_num)) {
             std::cout << "Write queue missing:" << line_num << "\n";
-            pthread_cond_wait(&params->queue_wait_conds[line_num & 255], &params->queue_slot_mutexs[line_num & 255]);
+            pthread_cond_wait(&params->queue_wait_conds[line_num & QUEUE_ACCESS_BITMASK], &params->queue_slot_mutexs[line_num & QUEUE_ACCESS_BITMASK]);
             std:: cout << "Woke up" << line_num << "\n";
         }
-        file_line line = params->line_queues[line_num & 255][line_num];
-        params->line_queues[line_num & 255].erase(line_num);
-        pthread_mutex_unlock(&params->queue_slot_mutexs[line_num & 255]);
+        file_line line = params->line_queues[line_num & QUEUE_ACCESS_BITMASK][line_num];
+        params->line_queues[line_num & QUEUE_ACCESS_BITMASK].erase(line_num);
+        pthread_mutex_unlock(&params->queue_slot_mutexs[line_num & QUEUE_ACCESS_BITMASK]);
         // Check for 'empty' lines.
         if(line.line_number != -1){
             pthread_mutex_lock(&write_lock);
             while(params->next_line_num_write != line.line_number) {
                 //std::cout << "Waiting on write ordering:" << line_num << ":" << params->next_line_num_write << "\n";
-                pthread_cond_wait(&write_order_cond[line_num & 255], &write_lock);
+                pthread_cond_wait(&write_order_cond[line_num & QUEUE_ACCESS_BITMASK], &write_lock);
                 //std::cout << "Cleared write order block for:" << line_num << "\n";
             }
             params->outfile << line.line << "\n";
             params->next_line_num_write++;
-            pthread_cond_broadcast(&write_order_cond[(line_num + 1) & 255]);
+            pthread_cond_broadcast(&write_order_cond[(line_num + 1) & QUEUE_ACCESS_BITMASK]);
             pthread_mutex_unlock(&write_lock);
         }
         // Lock ahead of while condition check
@@ -92,13 +93,13 @@ void Writer::read_finished(int total_lines) {
     this->total_lines = total_lines;
     pthread_mutex_unlock(&line_count_lock);
     // Start at totalLines + 1;
-    for (int i = 0; i <= 256; i++)
+    for (int i = 0; i <= QUEUE_ARRAY_SIZE; i++)
     {
         std::cout << "Adding dummy line:" << (total_lines + i) << "\n";
-        pthread_mutex_lock(&this->queue_mutexes[(total_lines + i) & 255]); 
+        pthread_mutex_lock(&this->queue_mutexes[(total_lines + i) & QUEUE_ACCESS_BITMASK]); 
         file_line dummyLine = file_line({"", -1});
-        this->write_queue[(total_lines + i) & 255][total_lines + i] = dummyLine;
-        pthread_cond_broadcast(&this->queue_slot_conds[(total_lines + i) & 255]);
-        pthread_mutex_unlock(&this->queue_mutexes[(total_lines + i) & 255]);
+        this->write_queue[(total_lines + i) & QUEUE_ACCESS_BITMASK][total_lines + i] = dummyLine;
+        pthread_cond_broadcast(&this->queue_slot_conds[(total_lines + i) & QUEUE_ACCESS_BITMASK]);
+        pthread_mutex_unlock(&this->queue_mutexes[(total_lines + i) & QUEUE_ACCESS_BITMASK]);
     }
 }
