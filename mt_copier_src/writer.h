@@ -9,6 +9,7 @@
 #include <map>
 #include <cmath>
 #include <queue>
+#include <set>
 
 #ifndef WRITER
 #define WRITER
@@ -19,14 +20,21 @@ const int MAX_SUPPORTED_THREADS = 100;
 const int QUEUE_ARRAY_SIZE = 256;
 const int QUEUE_ACCESS_BITMASK = QUEUE_ARRAY_SIZE - 1;
 
+
 struct file_line {
     std::string line;
     int line_number = 0;
 };
 
-
 typedef file_line* file_line_ptr;
-typedef std::deque<file_line_ptr> write_queue_t;
+
+struct file_line_sort{
+    bool operator()(const file_line& lhs, const file_line& rhs) const {
+        return lhs.line_number < rhs.line_number;
+    };
+};
+
+typedef std::set<file_line, file_line_sort> write_queue_t;
 
 struct write_thread_parameters {
     std::ofstream& outfile;
@@ -39,6 +47,10 @@ struct write_thread_parameters {
     int& total_lines;
     int& next_line_num_write;
     bool timer_enabled;
+
+    std::_Rb_tree_const_iterator<file_line> write_queue_iter;
+    std::_Rb_tree_const_iterator<file_line> write_queue_iter_end;
+
 };
 
 class Writer {

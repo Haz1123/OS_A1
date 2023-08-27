@@ -18,6 +18,7 @@ Writer::~Writer() {
 }
 
 void Writer::run(bool timer_enabled) {
+
     while( this->queue.back() != this->queue.front() ) {
         this->out.write(this->queue.front().c_str(), this->queue.front().size());
         this->out.write("\n", 1);

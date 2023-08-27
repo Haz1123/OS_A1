@@ -27,23 +27,27 @@ MyReader::~MyReader() {
     delete this->thread_parameters;
 }
 
+
+
 void *read_thread(void *read_thread_params) {
     struct read_thread_params *params = (struct read_thread_params *)read_thread_params;
-    file_line_ptr ingest = new file_line();
+    
+    file_line ingest = file_line();
+    write_queue_t local_queue;
     pthread_mutex_lock(&read_lock);
     while(!params->infile.eof()){
-        std::getline(params->infile, ingest->line);
-        ingest->line_number = params->finished_read_lines;
+        std::getline(params->infile, ingest.line);
+        ingest.line_number = params->finished_read_lines;
         params->finished_read_lines++;
         pthread_mutex_unlock(&read_lock);
-        if((ingest->line_number % 100000) == 0){
-            std::cout << "READ:" << ingest->line_number << "\n";
+        if((ingest.line_number % 100000) == 0){
+            std::cout << "READ:" << ingest.line_number << "\n";
         }
-        ingest->line.append("\n");
-        pthread_mutex_lock(&params->queue_mutex);
-        params->write_queue.push_back(ingest);
-        pthread_mutex_unlock(&params->queue_mutex);
-        ingest = new file_line;
+        ingest.line.append("\n");
+        //pthread_mutex_lock(&params->queue_mutex);
+        local_queue.insert(ingest);
+        //pthread_mutex_unlock(&params->queue_mutex);
+        ingest = file_line();
         // Lock read ahead of loop
         pthread_mutex_lock(&read_lock);
     }
@@ -59,6 +63,9 @@ void *read_thread(void *read_thread_params) {
     }
     pthread_mutex_unlock(&finished_count_lock);
 
+    pthread_mutex_lock(&params->queue_mutex);
+    params->write_queue.merge(local_queue);
+    pthread_mutex_unlock(&params->queue_mutex);
     pthread_exit(NULL);
 }
 

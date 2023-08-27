@@ -50,15 +50,7 @@ int main(int argc, char** argv) {
     read->run(num_threads);
     read->join_threads(num_threads);
 
-    struct
-    {
-        bool operator()(const file_line_ptr lhs, const file_line_ptr rhs) const {
-            return lhs->line_number < rhs->line_number;
-        }
-    }
-    sort_function;
-
-    std::sort(write_queue.begin(), write_queue.end(), sort_function);
+    //std::sort(write_queue.begin(), write_queue.end(), sort_function);
 
     std::cout << "Read finished.\n"; 
 
