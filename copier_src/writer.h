@@ -18,15 +18,17 @@ class Writer {
     /**
      * does the actual writing
      **/
-    void run(bool timer_enabled);
+    void run();
     /**
      * appends a line from the file read in to be output ... needed by the
      * reader class
      **/
     void append(const std::string& line);
+    void set_timer_enabled(bool timer_enabled){this->timer_enabled = timer_enabled;}
 
    private:
     std::ofstream out;
     std::deque<std::string> queue;
+    bool timer_enabled = false;
 };
 #endif

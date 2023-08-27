@@ -89,6 +89,7 @@ int main(int argc, char** argv) {
             write_order_times.emplace_back(x.tp_write_order_time);
             write_times.emplace_back(x.tp_write_time);
         }
+        std::cout << read_mutex_times.size() << "\n";
         // Get times 
         double read_queue_mutex_sum = (double)time_helper::sum_times_real(read_mutex_times) ;
         double read_line_read_sum = (double)time_helper::sum_times_real(line_read_times) ;

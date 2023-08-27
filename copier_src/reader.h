@@ -17,10 +17,12 @@ class MyReader {
     MyReader(const std::string& name, Writer& mywriter);
     ~MyReader();
     /* perform the reading from the file */
-    void run(bool timer_enabled);
+    void run();
+    void set_timer_enabled(bool timer_enabled){this->timer_enabled = timer_enabled;}
 
    private:
     std::ifstream in;
     Writer& thewriter;
+    bool timer_enabled = false;
 };
 #endif
