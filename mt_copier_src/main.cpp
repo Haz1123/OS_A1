@@ -49,11 +49,12 @@ int main(int argc, char** argv) {
     MyReader* read = new MyReader(infile, *write, write_queue, queue_mutex);
 
     write->set_timer_enabled(timer_enabled);
+    read->set_timer_enabled(timer_enabled);
 
     read->run(num_threads);
     // Need to ensure all threads are finished for 'line' ordering.
     read->join_threads(num_threads);
-    
+
     if(timer_enabled){std::cout << "Read finished.\n";};
 
     write->run(num_threads);    

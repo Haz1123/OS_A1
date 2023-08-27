@@ -18,6 +18,8 @@ MyReader::MyReader(const std::string& name, Writer& mywriter, write_queue_t& wri
     this->in = std::ifstream(name);
     this->read_lines= 0;
     this->queued_lines = 0;
+    this->general_time_info = std::vector<read_general_time_info>();
+    this->loop_time_info = std::vector<read_loop_time_info>();
 }
 
 MyReader::~MyReader() {
@@ -78,6 +80,7 @@ void *read_thread(void *read_thread_params) {
             tp_queue_mutex_wait_end - tp_queue_mutex_wait_start,
             tp_queue_merge_end - tp_queue_mutex_wait_end,
         });
+        pthread_mutex_unlock(&shared_time_info_mutex);
     }
 
     pthread_exit(NULL);
