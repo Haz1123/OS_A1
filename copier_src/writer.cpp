@@ -17,12 +17,31 @@ Writer::~Writer() {
     this->out.close();
 }
 
-void Writer::run(bool timer_enabled) {
-
+void Writer::run() {
+    const char* buffer;
+    int buffer_size;
+    clock_t queue_read_start;
+    clock_t queue_read_end;
+    clock_t line_write_end;
+    if(this->timer_enabled){queue_read_start = clock();}
     while( this->queue.back() != this->queue.front() ) {
-        this->out.write(this->queue.front().c_str(), this->queue.front().size());
-        this->out.write("\n", 1);
+        buffer = this->queue.front().c_str();
+        buffer_size = this->queue.front().size();
         this->queue.pop_front();
+        if(this->timer_enabled){queue_read_end = clock();}
+        this->out.write(buffer, buffer_size);
+        this->out.write("\n", 1);
+        if(this->timer_enabled){
+            line_write_end = clock();
+            this->timing_info.emplace_back(write_loop_time_info({
+                (clock_t)0,
+                queue_read_end - queue_read_start,
+                (clock_t)0,
+                line_write_end - queue_read_end
+            }));
+            queue_read_start = clock();
+        }
+
     }
     this->out.write(this->queue.front().c_str(), this->queue.front().size());
     this->queue.pop_front();

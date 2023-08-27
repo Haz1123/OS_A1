@@ -5,7 +5,10 @@
 #include <fstream>
 #include <iostream>
 #include <string>
+#include <vector>
 #include <deque>
+#include "timer.h"
+
 #ifndef WRITER
 #define WRITER
 class Writer {
@@ -24,8 +27,10 @@ class Writer {
      * reader class
      **/
     void append(const std::string& line);
-    void set_timer_enabled(bool timer_enabled){this->timer_enabled = timer_enabled;}
 
+    void set_timer_enabled(bool timer_enabled){this->timer_enabled = timer_enabled;};
+
+    std::vector<write_loop_time_info> timing_info;
    private:
     std::ofstream out;
     std::deque<std::string> queue;
