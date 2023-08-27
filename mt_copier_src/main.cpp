@@ -60,8 +60,12 @@ int main(int argc, char** argv) {
 
     std::sort(write_queue.begin(), write_queue.end(), sort_function);
 
+    std::cout << "Read finished.\n"; 
+
     write->run(num_threads, timer_enabled );    
     write->join_threads(num_threads);
+
+    std::cout << "Write finished.\n";
 
     delete read;
     delete write;
