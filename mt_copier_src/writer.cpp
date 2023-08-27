@@ -41,7 +41,7 @@ void *write_thread(void *write_thread_params) {
         pthread_mutex_unlock(&line_count_lock);
         pthread_mutex_lock(&params->queue_slot_mutexs[line_num & QUEUE_ACCESS_BITMASK]);
         // Check if expected line is in the queue
-        while(!(params->line_queues[line_num & QUEUE_ACCESS_BITMASK].top().line_number == line_num)) {
+        while(params->line_queues[line_num & QUEUE_ACCESS_BITMASK].empty() || !(params->line_queues[line_num & QUEUE_ACCESS_BITMASK].top().line_number == line_num)) {
             std::cout << "Write queue missing:" << line_num << "\n";
             pthread_cond_wait(&params->queue_wait_conds[line_num & QUEUE_ACCESS_BITMASK], &params->queue_slot_mutexs[line_num & QUEUE_ACCESS_BITMASK]);
             std:: cout << "Woke up" << line_num << "\n";

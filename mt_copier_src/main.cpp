@@ -52,7 +52,7 @@ int main(int argc, char** argv) {
     const clock_t start_time = timer->get_time();
     
     write_queue_t write_queue;
-
+    
     Writer* write = new Writer(outfile, write_queue, queue_slot_mutexs, queue_wait_conds);
     MyReader* read = new MyReader(infile, *write, write_queue, queue_slot_mutexs, queue_wait_conds);
 
