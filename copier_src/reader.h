@@ -17,7 +17,7 @@ class MyReader {
     MyReader(const std::string& name, Writer& mywriter);
     ~MyReader();
     /* perform the reading from the file */
-    void run();
+    void run(bool timer_enabled);
 
    private:
     std::ifstream in;

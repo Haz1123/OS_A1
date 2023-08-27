@@ -29,18 +29,21 @@ MyReader::~MyReader() {
 
 void *read_thread(void *read_thread_params) {
     struct read_thread_params *params = (struct read_thread_params *)read_thread_params;
+    file_line_ptr ingest = new file_line();
     pthread_mutex_lock(&read_lock);
     while(!params->infile.eof()){
-        file_line_ptr ingest = new file_line();
         std::getline(params->infile, ingest->line);
-        ingest->line.append("\n");
         ingest->line_number = params->finished_read_lines;
         params->finished_read_lines++;
         pthread_mutex_unlock(&read_lock);
-        
+        if((ingest->line_number %1000) == 0){
+            std::cout << "READ:" << ingest->line_number << "\n";
+        }
+        ingest->line.append("\n");
         pthread_mutex_lock(&params->queue_mutex);
         params->write_queue.push_back(ingest);
         pthread_mutex_unlock(&params->queue_mutex);
+        ingest = new file_line;
         // Lock read ahead of loop
         pthread_mutex_lock(&read_lock);
     }

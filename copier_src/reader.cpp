@@ -14,7 +14,7 @@ MyReader::~MyReader() {
     this->in.close();
 }
 
-void MyReader::run() {
+void MyReader::run(bool timer_enabled) {
     std::string ingest = std::string();
     while(!this->in.eof()){
         std::getline(this->in, ingest);
