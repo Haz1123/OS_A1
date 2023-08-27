@@ -13,8 +13,7 @@
 
 const std::string PROGRAM_USAGE = "Program usage: copier.exe n_threads source destination [-t]";
 
-queue_slot_mutexs_t queue_slot_mutexs;
-queue_wait_conds_t queue_wait_conds;
+pthread_mutex_t queue_mutex;
 
 /* global variables if needed go here */
 int main(int argc, char** argv) {
@@ -34,57 +33,39 @@ int main(int argc, char** argv) {
     }
     std::string infile = argv[2];
     std::string outfile = argv[3];
-
-    ProgramTimer* timer;
-    if(argc == 5 && std::string(argv[4]) != "-t") {
-        std::cout << PROGRAM_USAGE;
-        exit(1);
-    } else if (argc == 5 && std::string(argv[4]) == "-t") {
-        timer = new EnabledProgramTimer();
-    } else {
-        timer = new DisabledProgramTimer();
+    bool timer_enabled = false;
+    if(argc == 5 && argv[4] == std::string("-t")) {
+        timer_enabled = true;
     }
 
     if( !std::filesystem::exists(infile) ) {
         std::cout << "File:" << infile << " doesn't exist.";
     }
-
-    const clock_t start_time = timer->get_time();
     
     write_queue_t write_queue;
 
-    // Add placeholders. Allows for an optimization in the write loop.
-    for (int i = 0; i < QUEUE_ARRAY_SIZE; i++)
-    {
-        write_queue[i].push(file_line({"", INT32_MAX}));
-    }
-    
-
-    Writer* write = new Writer(outfile, write_queue, queue_slot_mutexs, queue_wait_conds);
-    MyReader* read = new MyReader(infile, *write, write_queue, queue_slot_mutexs, queue_wait_conds);
-
-
-    // Some 'initialization' code is still contained in the run function.
-    const clock_t init_finish = timer->get_time();
+    Writer* write = new Writer(outfile, write_queue, queue_mutex);
+    MyReader* read = new MyReader(infile, *write, write_queue, queue_mutex);
 
     read->run(num_threads);
-    write->run(num_threads);
-    
     read->join_threads(num_threads);
 
-    const clock_t read_finish = timer->get_time();
+    struct
+    {
+        bool operator()(const file_line_ptr lhs, const file_line_ptr rhs) const {
+            return lhs->line_number < rhs->line_number;
+        }
+    }
+    sort_function;
 
+    std::sort(write_queue.begin(), write_queue.end(), sort_function);
+
+    write->run(num_threads, timer_enabled );    
     write->join_threads(num_threads);
-
-    const clock_t write_finish = timer->get_time();
 
     delete read;
     delete write;
 
-    const clock_t cleanup_finish = timer->get_time();
-    
-    timer->print_results(start_time, init_finish, read_finish, write_finish, cleanup_finish);
-    delete timer;
 
     return EXIT_SUCCESS;
 }

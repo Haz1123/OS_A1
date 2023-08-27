@@ -12,10 +12,8 @@
 struct read_thread_params {
     std::ifstream& infile;
     write_queue_t& write_queue;
-    queue_slot_mutexs_t& queue_slot_mutexs;
-    queue_wait_conds_t& queue_wait_conds;
-
-    int& current_line;
+    pthread_mutex_t& queue_mutex;
+    int& finished_read_lines;
     Writer& writer;
     int& queued_lines;
     int num_threads;
@@ -27,7 +25,7 @@ class MyReader {
     /* create a reader that reads each line of the file and appends it to the
      * writer's queue
      */
-    MyReader(const std::string& name, Writer& mywriter, write_queue_t& write_queue, queue_slot_mutexs_t& queue_slot_mutexs, queue_wait_conds_t& queue_wait_conds);
+    MyReader(const std::string& name, Writer& mywriter, write_queue_t& write_queue, pthread_mutex_t& queue_lock);
     ~MyReader();
     /* perform the reading from the file */
     void run(int num_threads);
@@ -44,8 +42,7 @@ class MyReader {
     std::ifstream in;
     Writer& thewriter;
     write_queue_t& write_queue;
-    queue_slot_mutexs_t& queue_mutexes;
-    queue_wait_conds_t& queue_slot_conds;
+    pthread_mutex_t queue_mutex;
 
     int read_lines;
     int queued_lines;

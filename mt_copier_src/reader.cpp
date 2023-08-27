@@ -11,11 +11,10 @@ pthread_mutex_t read_lock;
 pthread_mutex_t writer_lock;
 pthread_mutex_t finished_count_lock;
 
-MyReader::MyReader(const std::string& name, Writer& mywriter, write_queue_t& write_queue, queue_slot_mutexs_t& queue_slot_mutexs, queue_wait_conds_t& queue_wait_conds)
+MyReader::MyReader(const std::string& name, Writer& mywriter, write_queue_t& write_queue, pthread_mutex_t& queue_lock)
     : thewriter(mywriter), 
     write_queue(write_queue), 
-    queue_mutexes(queue_slot_mutexs), 
-    queue_slot_conds(queue_wait_conds)
+    queue_mutex(queue_lock)
      {
     this->in = std::ifstream(name);
     this->read_lines= 0;
@@ -32,18 +31,16 @@ void *read_thread(void *read_thread_params) {
     struct read_thread_params *params = (struct read_thread_params *)read_thread_params;
     pthread_mutex_lock(&read_lock);
     while(!params->infile.eof()){
-        file_line ingest;
-        std::getline(params->infile, ingest.line);
-        ingest.line.append("\n");
-        ingest.line_number = params->current_line;
-        params->current_line++;
+        file_line_ptr ingest = new file_line();
+        std::getline(params->infile, ingest->line);
+        ingest->line.append("\n");
+        ingest->line_number = params->finished_read_lines;
+        params->finished_read_lines++;
         pthread_mutex_unlock(&read_lock);
         
-        pthread_mutex_lock(&params->queue_slot_mutexs[ingest.line_number & QUEUE_ACCESS_BITMASK]);
-        params->write_queue[ingest.line_number & QUEUE_ACCESS_BITMASK].push(ingest);
-        // Wakes up any writer threads waiting for changes.
-        pthread_cond_broadcast(&params->queue_wait_conds[ingest.line_number & QUEUE_ACCESS_BITMASK]);
-        pthread_mutex_unlock(&params->queue_slot_mutexs[ingest.line_number & QUEUE_ACCESS_BITMASK]);
+        pthread_mutex_lock(&params->queue_mutex);
+        params->write_queue.push_back(ingest);
+        pthread_mutex_unlock(&params->queue_mutex);
         // Lock read ahead of loop
         pthread_mutex_lock(&read_lock);
     }
@@ -54,7 +51,7 @@ void *read_thread(void *read_thread_params) {
     // Check if this thread is the last thread to finish writing.
     if(params->finished_thread_count == params->num_threads) {
         pthread_mutex_lock(&writer_lock);
-        params->writer.read_finished(params->current_line);
+        params->writer.read_finished(params->finished_read_lines);
         pthread_mutex_unlock(&writer_lock);
     }
     pthread_mutex_unlock(&finished_count_lock);
@@ -68,8 +65,7 @@ void MyReader::run(int num_threads) {
         {
             this->in, 
             this->write_queue, 
-            this->queue_mutexes, 
-            this->queue_slot_conds,
+            this->queue_mutex,
 
             this->read_lines, 
             this->thewriter, 

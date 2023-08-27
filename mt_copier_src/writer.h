@@ -22,35 +22,23 @@ const int QUEUE_ACCESS_BITMASK = QUEUE_ARRAY_SIZE - 1;
 struct file_line {
     std::string line;
     int line_number = 0;
-
-    bool operator<(const file_line& rhs){
-        return this->line_number < rhs.line_number;
-    }
-    bool operator>(const file_line& rhs){
-        return this->line_number > rhs.line_number;
-    }
-    bool operator()(const file_line& lhs,const file_line& rhs) {
-        return lhs.line_number > rhs.line_number;
-    }
 };
 
 
 typedef file_line* file_line_ptr;
-typedef std::priority_queue<file_line, std::vector<file_line>, file_line> write_sub_queue;
-typedef write_sub_queue write_queue_t[QUEUE_ARRAY_SIZE];
-typedef pthread_mutex_t queue_slot_mutexs_t[QUEUE_ARRAY_SIZE];
-typedef pthread_cond_t queue_wait_conds_t[QUEUE_ARRAY_SIZE];
+typedef std::deque<file_line_ptr> write_queue_t;
 
 struct write_thread_parameters {
     std::ofstream& outfile;
-    write_queue_t& line_queues;
-    queue_slot_mutexs_t& queue_slot_mutexs;
-    queue_wait_conds_t& queue_wait_conds;
+    write_queue_t& write_queue;
+    pthread_mutex_t& queue_mutex;
+
     bool& eof_reached;
     int& next_line_num_read;
     int num_threads;
     int& total_lines;
     int& next_line_num_write;
+    bool timer_enabled;
 };
 
 class Writer {
@@ -58,14 +46,14 @@ class Writer {
     /**
      * creates the writer instance that writes out to the file
      **/
-    Writer(const std::string& name, write_queue_t& write_queue, queue_slot_mutexs_t& queue_slot_mutexs, queue_wait_conds_t& queue_wait_conds );
+    Writer(const std::string& name, write_queue_t& write_queue, pthread_mutex_t& queue_mutex);
     ~Writer();
     /**
      * @brief Starts running writer threads
      * 
      * @param num_threads Number of threads to start.
      **/
-    void run(int num_threads);
+    void run(int num_threads, bool enable_timer);
     /**
      * @brief Waits for all threads to finish execution.
      * 
@@ -82,15 +70,13 @@ class Writer {
    private:
     std::ofstream out;
     write_queue_t& write_queue;
-    queue_slot_mutexs_t& queue_mutexes;
-    queue_wait_conds_t& queue_slot_conds;
-
+    pthread_mutex_t& queue_mutex;
     int current_line;
     bool eof_reached;
+    int total_lines;
+    int lines_written;
     pthread_t threads[MAX_SUPPORTED_THREADS];
     write_thread_parameters* thread_config;
-    int total_lines;
-    int written_lines;
 };
 
 #endif
