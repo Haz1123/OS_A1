@@ -10,6 +10,7 @@
 #include <cmath>
 #include <queue>
 #include <set>
+#include "timer.h"
 
 #ifndef WRITER
 #define WRITER
@@ -40,19 +41,12 @@ typedef std::set<file_line, file_line_sort> write_queue_t;
 
 struct write_thread_parameters {
     std::ofstream& outfile;
-    write_queue_t& write_queue;
     pthread_mutex_t& queue_mutex;
-
-    bool& eof_reached;
-    int& next_line_num_read;
-    int num_threads;
-    int& total_lines;
     int& next_line_num_write;
     bool timer_enabled;
-
     std::_Rb_tree_const_iterator<file_line> write_queue_iter;
     std::_Rb_tree_const_iterator<file_line> write_queue_iter_end;
-
+    std::vector<write_loop_time_info>& shared_time_info;
 };
 
 class Writer {
@@ -62,12 +56,13 @@ class Writer {
      **/
     Writer(const std::string& name, write_queue_t& write_queue, pthread_mutex_t& queue_mutex);
     ~Writer();
+    void set_timer_enabled(bool timer_enabled) {this->timer_enabled = timer_enabled;}
     /**
      * @brief Starts running writer threads
      * 
      * @param num_threads Number of threads to start.
      **/
-    void run(int num_threads, bool enable_timer);
+    void run(int num_threads);
     /**
      * @brief Waits for all threads to finish execution.
      * 
@@ -80,7 +75,8 @@ class Writer {
      * more lines will be added to the queue.
      */
     void read_finished(int total_lines);
-
+    
+    std::vector<write_loop_time_info> timing_info;
    private:
     std::ofstream out;
     write_queue_t& write_queue;
@@ -91,6 +87,8 @@ class Writer {
     int lines_written;
     pthread_t threads[MAX_SUPPORTED_THREADS];
     write_thread_parameters* thread_config;
+    bool timer_enabled;
+
 };
 
 #endif

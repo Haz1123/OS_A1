@@ -8,8 +8,7 @@
 #include <unistd.h>
 
 pthread_mutex_t read_lock;
-pthread_mutex_t writer_lock;
-pthread_mutex_t finished_count_lock;
+pthread_mutex_t shared_time_info_mutex;
 
 MyReader::MyReader(const std::string& name, Writer& mywriter, write_queue_t& write_queue, pthread_mutex_t& queue_lock)
     : thewriter(mywriter), 
@@ -19,7 +18,6 @@ MyReader::MyReader(const std::string& name, Writer& mywriter, write_queue_t& wri
     this->in = std::ifstream(name);
     this->read_lines= 0;
     this->queued_lines = 0;
-    this->finished_thread_count = 0;
 }
 
 MyReader::~MyReader() {
@@ -27,60 +25,75 @@ MyReader::~MyReader() {
     delete this->thread_parameters;
 }
 
-
-
 void *read_thread(void *read_thread_params) {
     struct read_thread_params *params = (struct read_thread_params *)read_thread_params;
+    bool timer = params->timer;
+    clock_t tp_read_mutex_start;
+    clock_t tp_read_mutex_end;
+    clock_t tp_line_read_end;
+    clock_t tp_local_queue_insert_start;
+    clock_t tp_local_queue_insert_end;
+    clock_t tp_queue_mutex_wait_start;
+    clock_t tp_queue_mutex_wait_end;
+    clock_t tp_queue_merge_end;
+    std::vector<read_loop_time_info> local_loop_time_info;
     
     file_line ingest = file_line();
     write_queue_t local_queue;
+    if(timer){tp_read_mutex_start = clock();};
     pthread_mutex_lock(&read_lock);
     while(!params->infile.eof()){
+        if(timer){tp_read_mutex_end = clock();};
         params->infile.read(ingest.line, READ_CHUNK_SIZE);
         ingest.line_number = params->finished_read_lines;
         params->finished_read_lines++;
         pthread_mutex_unlock(&read_lock);
-        if((ingest.line_number % 100000) == 0){
-            std::cout << "READ:" << ingest.line_number << "\n";
-        }
-        //pthread_mutex_lock(&params->queue_mutex);
+        if(timer){tp_line_read_end = clock();};
+        if(timer){tp_local_queue_insert_start = clock();};
         local_queue.insert(ingest);
-        //pthread_mutex_unlock(&params->queue_mutex);
+        if(timer){tp_local_queue_insert_end = clock();};
+        if(timer){
+            local_loop_time_info.insert(local_loop_time_info.end(), {
+                tp_read_mutex_end - tp_read_mutex_start,
+                tp_line_read_end - tp_read_mutex_end,
+                tp_local_queue_insert_end - tp_local_queue_insert_start,
+            });
+            tp_read_mutex_start = clock();
+        }
         ingest = file_line();
-        // Lock read ahead of loop
         pthread_mutex_lock(&read_lock);
     }
     pthread_mutex_unlock(&read_lock);
-
-    pthread_mutex_lock(&finished_count_lock);
-    params->finished_thread_count++;
-    // Check if this thread is the last thread to finish writing.
-    if(params->finished_thread_count == params->num_threads) {
-        pthread_mutex_lock(&writer_lock);
-        params->writer.read_finished(params->finished_read_lines);
-        pthread_mutex_unlock(&writer_lock);
-    }
-    pthread_mutex_unlock(&finished_count_lock);
-
+    if(timer){tp_queue_mutex_wait_start = clock();};
     pthread_mutex_lock(&params->queue_mutex);
+    if(timer){ tp_queue_mutex_wait_end = clock();};
     params->write_queue.merge(local_queue);
     pthread_mutex_unlock(&params->queue_mutex);
+    if(timer){tp_queue_merge_end= clock();};
+
+    if(timer){
+        pthread_mutex_lock(&shared_time_info_mutex);
+        params->loop_time_info.insert(params->loop_time_info.end(), local_loop_time_info.begin(), local_loop_time_info.end());
+        params->general_time_info.insert(params->general_time_info.end(), {
+            tp_queue_mutex_wait_end - tp_queue_mutex_wait_start,
+            tp_queue_merge_end - tp_queue_mutex_wait_end,
+        });
+    }
+
     pthread_exit(NULL);
 }
 
 void MyReader::run(int num_threads) {
-    pthread_mutex_init(&writer_lock, NULL);
     this->thread_parameters = new read_thread_params(
         {
             this->in, 
             this->write_queue, 
             this->queue_mutex,
-
             this->read_lines, 
-            this->thewriter, 
             this->queued_lines, 
-            num_threads, 
-            this->finished_thread_count
+            this->timer,
+            this->loop_time_info, 
+            this->general_time_info,
         }
     );
     for(int i = 0; i < num_threads; i++){
