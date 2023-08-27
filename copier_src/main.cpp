@@ -49,7 +49,9 @@ int main(int argc, char** argv) {
     read->set_timer_enabled(timer_enabled);
 
     read->run();
+    if(timer_enabled){std::cout << "Read finished.\n";};
     write->run();
+    if(timer_enabled){std::cout << "Write finished.\n";};
 
     std::chrono::_V2::system_clock::time_point end = std::chrono::system_clock::now();
 
