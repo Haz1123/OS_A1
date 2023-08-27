@@ -36,7 +36,7 @@ void *read_thread(void *read_thread_params) {
         ingest->line_number = params->finished_read_lines;
         params->finished_read_lines++;
         pthread_mutex_unlock(&read_lock);
-        if((ingest->line_number %1000) == 0){
+        if((ingest->line_number % 100000) == 0){
             std::cout << "READ:" << ingest->line_number << "\n";
         }
         ingest->line.append("\n");
