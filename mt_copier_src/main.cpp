@@ -12,6 +12,9 @@
 
 const std::string PROGRAM_USAGE = "Program usage: copier.exe n_threads source destination [-t]";
 
+queue_slot_mutexs_t queue_slot_mutexs;
+queue_wait_conds_t queue_wait_conds;
+
 /* global variables if needed go here */
 int main(int argc, char** argv) {
     if(argc <= 3) {
@@ -46,19 +49,29 @@ int main(int argc, char** argv) {
     }
 
     const clock_t start_time = timer->get_time();
+    
+    write_queue_t write_queue = {nullptr};
 
-    Writer* write = new Writer(outfile);
-    MyReader* read = new MyReader(infile, *write);
+    for (int i = 0; i < 256; i++)
+    {
+        write_queue[i] = new file_line();
+    }
+    
+
+    Writer* write = new Writer(outfile, write_queue, queue_slot_mutexs, queue_wait_conds);
+    MyReader* read = new MyReader(infile, *write, write_queue, queue_slot_mutexs, queue_wait_conds);
+
 
     // Some 'initialization' code is still contained in the run function.
     const clock_t init_finish = timer->get_time();
 
     read->run(num_threads);
+    write->run(num_threads);
+
     read->join_threads(num_threads);
     
     const clock_t read_finish = timer->get_time();
 
-    write->run(num_threads);
     write->join_threads(num_threads);
 
     const clock_t write_finish = timer->get_time();
