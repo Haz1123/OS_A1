@@ -25,12 +25,10 @@ void Writer::run() {
     clock_t line_write_end;
     if(this->timer_enabled){queue_read_start = clock();}
     while( this->queue.back() != this->queue.front() ) {
-        buffer = this->queue.front().c_str();
-        buffer_size = this->queue.front().size();
+        this->out.write(this->queue.front().c_str(), this->queue.front().length());
+        this->out.write("\n", 1);
         this->queue.pop_front();
         if(this->timer_enabled){queue_read_end = clock();}
-        this->out.write(buffer, buffer_size);
-        this->out.write("\n", 1);
         if(this->timer_enabled){
             line_write_end = clock();
             this->timing_info.emplace_back(write_loop_time_info({
