@@ -35,7 +35,7 @@ void *write_thread(void *write_thread_params) {
         line_num = params->next_line_num_read;
         params->next_line_num_read++;
         // Magic number. Remove this for the love of god.
-        if(params->next_line_num_read & 1048575 == 0) {
+        if((params->next_line_num_read & 1048575) == 0) {
             std::cout << "Write:" << params->next_line_num_read << "\n";
         }
         pthread_mutex_unlock(&line_count_lock);
