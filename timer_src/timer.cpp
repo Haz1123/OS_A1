@@ -49,6 +49,6 @@ std::string EnabledProgramTimer::format_time_difference(clock_t difference) {
     if( difference == CLOCK_T_ERR ) {
         return std::string("ERROR: clock() encountered an error.");
     } else {
-        return std::to_string((double)(difference / (double)CLOCKS_PER_SEC));
+        return std::to_string((double)((double)difference / (double)CLOCKS_PER_SEC));
     }
 }

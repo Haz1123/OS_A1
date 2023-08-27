@@ -34,10 +34,7 @@ void *write_thread(void *write_thread_params) {
     while(params->eof_reached == false || line_num <= params->total_lines){
         line_num = params->next_line_num_read;
         params->next_line_num_read++;
-        // Magic number. Remove this for the love of god.
-        if((params->next_line_num_read & 1048575) == 0) {
-            std::cout << "Write:" << params->next_line_num_read << "\n";
-        }
+
         pthread_mutex_unlock(&line_count_lock);
         pthread_mutex_lock(&params->queue_slot_mutexs[line_num & QUEUE_ACCESS_BITMASK]);
         // Check if expected line is in the queue
@@ -64,7 +61,6 @@ void *write_thread(void *write_thread_params) {
         pthread_mutex_lock(&line_count_lock);
     }
     pthread_mutex_unlock(&line_count_lock);
-    std::cout << "Write thread finished.\n";
     pthread_exit(NULL);
 }
 
