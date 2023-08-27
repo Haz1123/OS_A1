@@ -52,7 +52,7 @@ void *write_thread(void *write_thread_params) {
             pthread_cond_wait(&write_order_cond[line.line_number & ORDER_ACCESS_BITMASK], &write_lock);\
         }
         if(timer){tp_line_order = clock();}
-        params->outfile << line.line;
+        params->outfile.write(line.line, READ_CHUNK_SIZE);
         params->next_line_num_write++;
         pthread_cond_broadcast(&write_order_cond[(line.line_number + 1) & ORDER_ACCESS_BITMASK]);
         pthread_mutex_unlock(&write_lock);
