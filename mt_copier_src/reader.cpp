@@ -38,7 +38,7 @@ void *read_thread(void *read_thread_params) {
         ingest.read = true;
         ingest.written = false;
         params->current_line++;
-        if((params->current_line % 100) == 0) {
+        if((params->current_line % 100000) == 0) {
             std::cout << "READ:" << params->current_line << "\n";
         }
         pthread_mutex_unlock(&read_lock);
