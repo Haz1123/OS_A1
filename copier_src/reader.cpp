@@ -19,13 +19,13 @@ MyReader::~MyReader() {
 }
 
 void MyReader::run() {
-    std::string ingest = std::string();
     clock_t line_read_start;
     clock_t line_read_end;
     clock_t insert_end;
     if(this->timer_enabled){line_read_start = clock();}
     while(!this->in.eof()){
-        std::getline(this->in, ingest);
+        file_line ingest;
+        this->in.read(ingest.line, READ_CHUNK_SIZE);
         if(this->timer_enabled){line_read_end = clock();}
         this->thewriter.append(ingest);
         if(this->timer_enabled){

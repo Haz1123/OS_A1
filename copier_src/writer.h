@@ -11,6 +11,15 @@
 
 #ifndef WRITER
 #define WRITER
+
+// Number of characters to try and read at a time.
+const int READ_CHUNK_SIZE = 1024;
+
+struct file_line {
+    char line[READ_CHUNK_SIZE];
+};
+
+
 class Writer {
    public:
     /**
@@ -26,14 +35,14 @@ class Writer {
      * appends a line from the file read in to be output ... needed by the
      * reader class
      **/
-    void append(const std::string& line);
+    void append(file_line);
 
     void set_timer_enabled(bool timer_enabled){this->timer_enabled = timer_enabled;};
 
     std::vector<write_loop_time_info> timing_info;
    private:
     std::ofstream out;
-    std::deque<std::string> queue;
+    std::deque<file_line> queue;
     bool timer_enabled = false;
 };
 #endif

@@ -10,7 +10,7 @@
  **/
 Writer::Writer(const std::string& name) {
     this->out.open(name);
-    this->queue = std::deque<std::string>();
+    this->queue = std::deque<file_line>();
 }
 
 Writer::~Writer() {
@@ -22,8 +22,8 @@ void Writer::run() {
     clock_t queue_read_end;
     clock_t line_write_end;
     if(this->timer_enabled){queue_read_start = clock();}
-    while( this->queue.back() != this->queue.front() ) {
-        this->out.write(this->queue.front().c_str(), this->queue.front().length());
+    while( this->queue.back().line != this->queue.front().line ) {
+        this->out.write(this->queue.front().line, READ_CHUNK_SIZE);
         this->out.write("\n", 1);
         this->queue.pop_front();
         if(this->timer_enabled){queue_read_end = clock();}
@@ -39,10 +39,10 @@ void Writer::run() {
         }
 
     }
-    this->out.write(this->queue.front().c_str(), this->queue.front().size());
+    this->out.write(this->queue.front().line, READ_CHUNK_SIZE);
     this->queue.pop_front();
 }
 
-void Writer::append(const std::string& line) {
+void Writer::append(const file_line line) {
     this->queue.emplace_back(line);
 }
