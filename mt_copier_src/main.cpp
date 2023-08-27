@@ -51,14 +51,7 @@ int main(int argc, char** argv) {
 
     const clock_t start_time = timer->get_time();
     
-    write_queue_t write_queue;
-
-    // Add placeholders. Allows for an optimization in the write loop.
-    for (int i = 0; i < QUEUE_ARRAY_SIZE; i++)
-    {
-        write_queue[i].push(file_line({"", INT32_MAX}));
-    }
-    
+    write_queue_t write_queue;    
 
     Writer* write = new Writer(outfile, write_queue, queue_slot_mutexs, queue_wait_conds);
     MyReader* read = new MyReader(infile, *write, write_queue, queue_slot_mutexs, queue_wait_conds);
@@ -69,9 +62,9 @@ int main(int argc, char** argv) {
 
     read->run(num_threads);
     write->run(num_threads);
+
     read->join_threads(num_threads);
 
-    
     const clock_t read_finish = timer->get_time();
 
     write->join_threads(num_threads);
