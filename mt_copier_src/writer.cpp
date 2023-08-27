@@ -38,7 +38,7 @@ void *write_thread(void *write_thread_params) {
         pthread_mutex_lock(&params->queue_slot_mutexs[line_num & 255]);
         // Check if line hasn't been read yet.
         while(params->line_queues[line_num & 255]->read == false) {
-            std::cout << "Waiting to take off queue:" << line_num << "\n";
+            //std::cout << "Waiting to take off queue:" << line_num << "\n";
             pthread_cond_wait(&params->queue_wait_conds[line_num & 255], &params->queue_slot_mutexs[line_num & 255]);
         }
         file_line line = *params->line_queues[line_num & 255];
@@ -50,7 +50,7 @@ void *write_thread(void *write_thread_params) {
         // Check for 'empty' lines.
         if(line.line_number != -1){
             if(line_num != line.line_number){
-                std::cout << "SOMETHING GOD READ OUT OF ORDER!!!\n";
+                std::cout << "SOMETHING GOD READ OUT OF ORDER!!!!!\n";
                 pthread_exit(NULL);
             }
             pthread_mutex_lock(&write_lock);
@@ -64,7 +64,7 @@ void *write_thread(void *write_thread_params) {
             pthread_cond_broadcast(&write_order_cond[(line_num + 1) & 255]);
             pthread_mutex_unlock(&write_lock);
         } else {
-            std::cout << "read thingy empty:" << line_num << "\n";
+            //std::cout << "read thingy empty:" << line_num << "\n";
             pthread_mutex_unlock(&params->queue_slot_mutexs[line_num & 255]);
         }
         // Lock ahead of while condition check
@@ -114,5 +114,4 @@ void Writer::read_finished(int total_lines) {
         pthread_cond_broadcast(&this->queue_slot_conds[(total_lines + i) & 255]);
         pthread_mutex_unlock(&this->queue_mutexes[(total_lines + i) & 255]);
     }
-    std::cout << "finished reading" << "\n";
 }

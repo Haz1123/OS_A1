@@ -48,9 +48,9 @@ void *read_thread(void *read_thread_params) {
         // Also validate line ordering is correct
         while(params->write_queue[ingest->line_number & 255]->read == true || ingest->line_number > params->write_queue[ingest->line_number & 255]->line_number + 256){
             if(ingest->line_number > params->write_queue[ingest->line_number & 255]->line_number + 256){
-                std::cout<<"I'm out of order to queue! Wait for" << (ingest->line_number & 255) << "\n";
+                //std::cout<<"I'm out of order to queue! Wait for" << (ingest->line_number & 255) << "\n";
             } else {
-                std::cout << "I'm waiting for something to write!" << ingest->line_number << "\n";
+                //std::cout << "I'm waiting for something to write!" << ingest->line_number << "\n";
             }
             pthread_cond_wait(&params->queue_wait_conds[ingest->line_number & 255], &params->queue_slot_mutexs[ingest->line_number & 255]);
         }
