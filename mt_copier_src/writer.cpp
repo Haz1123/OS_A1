@@ -50,18 +50,16 @@ void *write_thread(void *write_thread_params) {
         params->line_queues[line_num & QUEUE_ACCESS_BITMASK].pop();
         pthread_mutex_unlock(&params->queue_slot_mutexs[line_num & QUEUE_ACCESS_BITMASK]);
         // Check for 'empty' lines.
-        if(line.line_number != -1){
-            pthread_mutex_lock(&write_lock);
-            while(params->next_line_num_write != line.line_number) {
-                //std::cout << "Waiting on write ordering:" << line_num << ":" << params->next_line_num_write << "\n";
-                pthread_cond_wait(&write_order_cond[line_num & QUEUE_ACCESS_BITMASK], &write_lock);
-                //std::cout << "Cleared write order block for:" << line_num << "\n";
-            }
-            params->outfile << line.line << "\n";
-            params->next_line_num_write++;
-            pthread_cond_broadcast(&write_order_cond[(line_num + 1) & QUEUE_ACCESS_BITMASK]);
-            pthread_mutex_unlock(&write_lock);
+        pthread_mutex_lock(&write_lock);
+        while(params->next_line_num_write != line.line_number) {
+            //std::cout << "Waiting on write ordering:" << line_num << ":" << params->next_line_num_write << "\n";
+            pthread_cond_wait(&write_order_cond[line_num & QUEUE_ACCESS_BITMASK], &write_lock);
+            //std::cout << "Cleared write order block for:" << line_num << "\n";
         }
+        params->outfile << line.line;
+        params->next_line_num_write++;
+        pthread_cond_broadcast(&write_order_cond[(line_num + 1) & QUEUE_ACCESS_BITMASK]);
+        pthread_mutex_unlock(&write_lock);
         // Lock ahead of while condition check
         pthread_mutex_lock(&line_count_lock);
     }

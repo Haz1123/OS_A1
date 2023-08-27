@@ -34,6 +34,7 @@ void *read_thread(void *read_thread_params) {
     while(!params->infile.eof()){
         file_line ingest;
         std::getline(params->infile, ingest.line);
+        ingest.line.append("\n");
         ingest.line_number = params->current_line;
         params->current_line++;
         pthread_mutex_unlock(&read_lock);
