@@ -8,7 +8,7 @@
 /**
  * provide your implementation for the writer functions here
  **/
-Writer::Writer(const std::string& name, write_queue_t& write_queue, queue_slot_mutexs_t& queue_slot_mutexs, queue_wait_conds_t& queue_wait_conds) {
+Writer::Writer(const std::string& name) {
     this->out.open(name);
     this->queue = std::deque<std::string>();
 }
