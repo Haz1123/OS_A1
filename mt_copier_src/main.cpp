@@ -53,13 +53,12 @@ int main(int argc, char** argv) {
     read->run(num_threads);
     // Need to ensure all threads are finished for 'line' ordering.
     read->join_threads(num_threads);
-
-    std::cout << "Read finished.\n"; 
+    
+    if(timer_enabled){std::cout << "Read finished.\n";};
 
     write->run(num_threads);    
     write->join_threads(num_threads);
-
-    std::cout << "Write finished.\n";
+    if(timer_enabled){std::cout << "Write finished.\n";};
 
     if(timer_enabled){
         // Reader loop info
