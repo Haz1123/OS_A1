@@ -18,8 +18,6 @@ Writer::~Writer() {
 }
 
 void Writer::run() {
-    const char* buffer;
-    int buffer_size;
     clock_t queue_read_start;
     clock_t queue_read_end;
     clock_t line_write_end;
