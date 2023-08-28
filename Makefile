@@ -5,7 +5,7 @@
  ##
 
 # provide make targets here to build the two programs 
-all: copier mt_copier
+all: copier mtcopier
 
 copier: clean
 	cp ./timer_src/timer.cpp ./copier_src
